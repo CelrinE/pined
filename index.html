@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>PINed</title>
+<style>
+:root{--bg:#000;color-scheme:dark}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#000}}
+:root[data-theme="dark"]{--bg:#000}
+html,body{margin:0;height:100%;background:var(--bg);overflow:hidden}
+.stage{position:fixed;inset:0;overflow:hidden}
+.frame{position:absolute;left:50%;top:50%;width:1920px;height:1080px;transform-origin:0 0}
+iframe{border:0;width:1920px;height:1080px;display:block;background:#000}
+</style></head>
+<body>
+<div class="stage"><div class="frame" id="fr"><iframe id="pf" src="prototype.html" title="PINed, 1920 by 1080"></iframe></div></div>
+<script>
+(function(){
+  var st=document.querySelector('.stage'), fr=document.getElementById('fr'), pf=document.getElementById('pf');
+  function fit(){ var k=Math.min(st.clientWidth/1920, st.clientHeight/1080); fr.style.transform='scale('+k+') translate(-50%,-50%)'; }
+  addEventListener('resize', fit); fit();
+  pf.addEventListener('load', function(){ try{ pf.focus(); }catch(e){} });
+})();
+</script>
+</body></html>
