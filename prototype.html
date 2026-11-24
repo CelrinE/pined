@@ -333,15 +333,17 @@ body.D #rulerTip{font-size:16px}
 .go.cour{display:block;text-align:left}
 #L4 .prow.go:hover{color:var(--ink)}
 #L4 .mk.go{z-index:3}
-/* places: hovering a place (list row or map pin) enlarges it and shrinks and fades the others; a pin is a small plain black square until it is hovered, then it grows and shows its color and letter. Scrolling gives the same look to the place of the current beat */
-#L4{--mk-rest:.6}   /* resting size of a pin as a share of its 18 px box: 60%, which is 40% smaller */
-#L4 .mk{pointer-events:none;background:var(--ink);color:transparent;transform:scale(var(--mk-rest));transition:transform .35s var(--reveal),opacity .3s,background .3s,color .3s}
+/* places: hovering a place (list row or map pin) enlarges it and, while the pointer is on a place, shrinks and fades the others; a pin is a small plain black square until it is hovered, then it grows and shows its color and letter. Scrolling gives the grown look (no fading) to the place of the current beat */
+#L4{--mk-rest:.75}   /* resting size of a pin as a share of its 18 px box: 75%, which is 25% smaller */
+#L4 .mk{z-index:1;pointer-events:none;background:var(--ink);color:transparent;transform:scale(var(--mk-rest));transition:transform .35s var(--reveal),opacity .3s,background .3s,color .3s}   /* z-index 1: above the torch glow, which would lighten the pins */
+#L4 .mchip{z-index:1;margin-left:14px;pointer-events:none}   /* above the torch glow; 14 px to the right so the label clears a grown pin (39.6 px and its ring); labels never catch the pointer */
+#L4 .mchip[data-b="2"]{margin-top:-17px}   /* D · URK: raised, so it does not cover pin E */
+#L4 .mchip[data-b="3"]{margin-top:6px}   /* G · ALMERE: lowered, so it does not cover pin H */
 #L4 .prow{cursor:pointer;transform-origin:0 50%;transition:color .3s,transform .35s var(--reveal),opacity .3s}
 #L4 .mk.hv{background:var(--red);color:var(--ink);transform:scale(2.2);z-index:4}
 #L4 .prow.hv{transform:scale(1.1);color:var(--ink)}
 #L4.phov .mk:not(.hv){transform:scale(calc(var(--mk-rest) * .7));opacity:.35}
 #L4.phov .prow:not(.hv){transform:scale(.92);opacity:.38}
-#L4.dimchip .mchip.on{opacity:.3}
 @media (prefers-reduced-motion: reduce){#L4 .mk,#L4 .prow{transition:none}}
 .gxs .gx .go{pointer-events:auto}
 #D4 .lm.vis{box-shadow:0 0 0 2px var(--char),0 0 0 4px var(--lime)}
@@ -1504,13 +1506,14 @@ body.D #rulerTip{font-size:16px}
     if (dp && dp.lastElementChild) dp.lastElementChild.appendChild(bracketButton(null, '원리 보기', "display:block;margin-top:14px;font:700 18px/1.4 'Courier Prime',monospace;color:var(--lime)", () => goSub(true)));
   }
   // ------------------------------------------------------------ places: hover on the Light map list and pins
-  // A place is a list row and a pin with the same letter. One place at a time shows the hovered look: its pin grows and shows its
-  // red and its letter, its row grows, and the other places shrink and fade. That is the place under the pointer or, when the pointer
-  // is on no place, the place of the current scroll beat (BEAT_KEYS). A beat change from scrolling takes the look back from the
-  // pointer; the pointer gets it again when it moves (an event with no movement, like the one a browser sends after a scroll, is not a hover).
+  // A place is a list row and a pin with the same letter. One place at a time has the grown look: its pin grows and shows its red
+  // and its letter, and its row grows. That is the place under the pointer or, when the pointer is on no place, the place of the
+  // current scroll beat (BEAT_KEYS). While the pointer is on a place the other places also shrink and fade (class phov); scrolling
+  // alone fades nothing. A beat change from scrolling takes the look back from the pointer; the pointer gets it again when it moves
+  // (an event with no movement, like the one a browser sends after a scroll, is not a hover).
   // Pins are click-through; one layer (.zhit) finds the pin: its collider is a square twice the pin's 18 px box (one box size to
   // each side of the center), measured on the unscaled box so it does not change with the resting size or the dimming (the resting
-  // pin is drawn at 60% of its box, so the collider is 3.3x the visible pin). A hovered pin grows past that square (2.2x is wider
+  // pin is drawn at 75% of its box, so the collider is 2.7x the visible pin). A hovered pin grows past that square (2.2x is wider
   // than 2x), so its visible body counts as collider too and the pin does not drop out under the pointer.
   // The nearest pin wins where colliders overlap.
   var placesFocus = null;   // set by setupPlaces; s4() calls it when the beat changes
@@ -1520,11 +1523,10 @@ body.D #rulerTip{font-size:16px}
     const mks = $$('#L4 .mk'), rows = $$('#L4 .prow');
     let hk = null, lx = -1, ly = -1;   // hk: the place under the pointer; lx, ly: where the pointer was last seen
     function show() {
-      const beat = BEAT_KEYS[s4k] || null, k = hk || beat;
-      L4.classList.toggle('phov', !!k);
+      const k = hk || BEAT_KEYS[s4k] || null;
+      L4.classList.toggle('phov', !!hk);   // the others shrink and fade only while the pointer is on a place
       mks.forEach(m => m.classList.toggle('hv', m.dataset.k === k));
       rows.forEach(r => r.classList.toggle('hv', r.dataset.k === k));
-      L4.classList.toggle('dimchip', !!hk && !!beat && hk !== beat);   // the beat's name chip dims while the pointer is on another place
       hit.style.cursor = hk ? 'pointer' : '';
     }
     function setHover(k) { if (k !== hk) { hk = k; show(); } }
