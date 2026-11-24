@@ -352,6 +352,10 @@ body.D #rulerTip{font-size:16px}
 #L4 .pop:hover .cta,#L4 .pop .cta:focus-visible{color:var(--coral)!important}   /* !important: the label keeps its inline color */
 /* Dark map pins: click-through; setupDarkPins() finds the pin under the pointer with a collider 50% larger than before (42 px for a 14 px pin) */
 #D4 .lm:not(.hmc){pointer-events:none}
+/* Dark map place cards: pointer, and the place name turns the bright Dark blue (--line) on hover */
+#D4 .pop{cursor:pointer}
+#D4 .pop .scr{transition:color .2s}
+#D4 .pop:hover .scr{color:var(--line)}
 .gxs .gx .go{pointer-events:auto}
 #D4 .lm.vis{box-shadow:0 0 0 2px var(--char),0 0 0 4px var(--lime)}
 </style></head>
