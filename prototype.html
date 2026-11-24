@@ -350,6 +350,8 @@ body.D #rulerTip{font-size:16px}
 #L4 .pop{cursor:pointer}
 #L4 .pop .cta{transition:color .2s}
 #L4 .pop:hover .cta,#L4 .pop .cta:focus-visible{color:var(--coral)!important}   /* !important: the label keeps its inline color */
+/* Dark map pins: click-through; setupDarkPins() finds the pin under the pointer with a collider 50% larger than before (42 px for a 14 px pin) */
+#D4 .lm:not(.hmc){pointer-events:none}
 .gxs .gx .go{pointer-events:auto}
 #D4 .lm.vis{box-shadow:0 0 0 2px var(--char),0 0 0 4px var(--lime)}
 </style></head>
@@ -1134,7 +1136,7 @@ body.D #rulerTip{font-size:16px}
       };
       const off = () => { el.classList.remove('hv'); tip.classList.remove('on'); };
       el.addEventListener('pointerenter', on); el.addEventListener('pointerleave', off);
-      el._on = on;
+      el._on = on; el._off = off;
     });
   }
   function fillLC() {
@@ -1566,6 +1568,35 @@ body.D #rulerTip{font-size:16px}
     });
     show();
   }
+  // Dark map pins (section 04): each pin's hover collider is a square 50% larger than before. It was the pin and 7 px around it
+  // (28 px for a 14 px pin); now it is 1.5 times that (42 px). Pins sit 10-12 px apart in places, so where colliders overlap the
+  // nearest pin wins, and pins that have not appeared yet (no class on) do not react. Pins are click-through: one listener on
+  // the stage finds the pin, shows its tip, and passes a click on to it (the Kinderdijk pin opens the Dark sub page).
+  function setupDarkPins() {
+    const stage = $('#D4 .stage');
+    if (!stage) return;
+    const pins = $$('#D4 .lm:not(.hmc)').filter(el => el._on);
+    let cur = null;
+    function at(x, y) {
+      let best = null, bd = 1e9;
+      pins.forEach(el => {
+        if (!el.classList.contains('on')) return;
+        const r = el.getBoundingClientRect(), half = 1.5 * (el.offsetWidth / 2 + 7);
+        const dx = x - (r.left + r.width / 2), dy = y - (r.top + r.height / 2);
+        if (Math.abs(dx) <= half && Math.abs(dy) <= half) { const d = dx * dx + dy * dy; if (d < bd) { bd = d; best = el; } }
+      });
+      return best;
+    }
+    function set(el) {
+      if (el === cur) return;
+      pins.forEach(p => { if (p !== el && p.classList.contains('hv')) p._off(); });
+      cur = el; if (el) el._on();
+      stage.style.cursor = el ? 'pointer' : '';
+    }
+    stage.addEventListener('pointermove', e => set(at(e.clientX, e.clientY)));
+    stage.addEventListener('pointerleave', () => set(null));
+    stage.addEventListener('click', e => { const el = at(e.clientX, e.clientY); if (el) el.click(); });
+  }
   // coming back from a sub page (or from the wrapper's nav): open in the right theme, at the saved place
   function resumeFlow() {
     if (!qs.has('resume')) return;
@@ -1578,7 +1609,7 @@ body.D #rulerTip{font-size:16px}
 
   async function start() {
     try { await doc.fonts.ready; await doc.fonts.load('15px "Courier Prime"'); } catch (e) { /* fonts optional */ }
-    initCipher(); fillLC(); layoutRuler(); setupReveals(); slides(); setupMap(); setupFlow(); setupPlaces(); if (!CAP) resumeFlow();
+    initCipher(); fillLC(); layoutRuler(); setupReveals(); slides(); setupMap(); setupFlow(); setupPlaces(); setupDarkPins(); if (!CAP) resumeFlow();
     await prepFlashes();
     if (CAP) { requestAnimationFrame(() => { capture(); requestAnimationFrame(tick); }); return; }
     update(); requestAnimationFrame(tick);
