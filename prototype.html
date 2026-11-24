@@ -345,6 +345,11 @@ body.D #rulerTip{font-size:16px}
 #L4.phov .mk:not(.hv){transform:scale(calc(var(--mk-rest) * .7));opacity:.35}
 #L4.phov .prow:not(.hv){transform:scale(.92);opacity:.38}
 @media (prefers-reduced-motion: reduce){#L4 .mk,#L4 .prow{transition:none}}
+/* place card: when the place has a sub page, the whole card opens it, and its [ 여행지 보기 ] turns coral (DESIGN.md --coral) on hover */
+:root{--coral:#dc6763}
+#L4 .pop.link{cursor:pointer}
+#L4 .pop.link .go{transition:color .2s}
+#L4 .pop.link:hover .go,#L4 .pop.link .go:focus-visible{color:var(--coral)!important}   /* !important: the button keeps the inline color of the text it replaced */
 .gxs .gx .go{pointer-events:auto}
 #D4 .lm.vis{box-shadow:0 0 0 2px var(--char),0 0 0 4px var(--lime)}
 </style></head>
@@ -1547,6 +1552,14 @@ body.D #rulerTip{font-size:16px}
     rows.forEach(r => {
       r.addEventListener('pointermove', e => { if (moved(e)) setHover(r.dataset.k); });
       r.addEventListener('pointerleave', () => setHover(null));
+    });
+    // place cards: a card whose place has a sub page opens it from anywhere on the card (its button already does)
+    const SUBS = { A: () => goSub(false) };   // only Kinderdijk has sub pages so far
+    $$('#L4 .pop').forEach(p => {
+      const open = SUBS[BEAT_KEYS[+p.dataset.b]];
+      if (!open) return;
+      p.classList.add('link');
+      p.addEventListener('click', e => { if (!e.target.closest('button')) open(); });
     });
     show();
   }
