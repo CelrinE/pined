@@ -1601,6 +1601,52 @@ body.D #rulerTip{font-size:16px}
     stage.addEventListener('pointerleave', () => set(null));
     stage.addEventListener('click', e => { const el = at(e.clientX, e.clientY); if (el) el.click(); });
   }
+  // ------------------------------------------------------------ dark drawings: the Dark page's line art draws itself
+  // Every line drawing of the Dark layer (an svg with fill="none") draws its strokes one after another; filled parts fade in.
+  // In the pinned stages (02 gallery, 04 map) a drawing draws when it appears, and again when it reappears after being gone for
+  // a moment (a new beat). In the scrolling sections it follows the scroll position. Off in capture mode and with reduced motion.
+  function setupDarkDraw() {
+    if (CAP || REDUCE) return;
+    const eo = k => 1 - Math.pow(1 - k, 3);
+    const groups = $$('#dark svg[fill="none"]').map(sv => {
+      const draw = [], fade = [];
+      $$('path', sv).filter(pt => !pt.closest('clipPath, defs')).forEach(pt => {
+        const st = pt.getAttribute('stroke'), fl = pt.getAttribute('fill');
+        if (st && st !== 'none' && (!fl || fl === 'none') && !pt.getAttribute('stroke-dasharray')) {
+          pt.setAttribute('pathLength', '1'); pt.style.strokeDasharray = '1 1'; draw.push(pt);
+        } else fade.push(pt);
+      });
+      return { sv, draw, fade, pinned: !!sv.closest('.sec.pin'), t0: -1, gone: 0, cur: 0, shown: -1 };
+    }).filter(g => g.draw.length);
+    const set = (g, p) => {
+      if (Math.abs(p - g.shown) < 1e-4) return;
+      g.shown = p;
+      const N = g.draw.length, w = Math.min(.5, Math.max(.12, 6 / N));
+      g.draw.forEach((pt, k) => {
+        const s0 = N > 1 ? (k / (N - 1)) * (1 - w) : 0, e = eo(clamp((p - s0) / w, 0, 1));
+        pt.style.strokeDashoffset = String(1 - e); pt.style.visibility = e > 0 ? 'visible' : 'hidden';
+      });
+      g.fade.forEach(pt => { pt.style.opacity = String(eo(clamp((p - .5) / .5, 0, 1))); });
+    };
+    groups.forEach(g => set(g, 0));
+    function frame(now) {
+      const H = innerHeight, dark = theme === 'D';
+      groups.forEach(g => {
+        const r = g.sv.getBoundingClientRect();
+        if (g.pinned) {
+          const seen = dark && r.bottom > H * .06 && r.top < H * .94 && (!g.sv.checkVisibility || g.sv.checkVisibility({ opacityProperty: true, visibilityProperty: true }));
+          if (seen) { g.gone = 0; if (g.t0 < 0) g.t0 = now; set(g, clamp((now - g.t0 - 150) / 1800, 0, 1)); }
+          else if (g.t0 >= 0) { if (!g.gone) g.gone = now; else if (now - g.gone > 600) { g.t0 = -1; set(g, 0); } }
+        } else {
+          const target = dark ? clamp((H * .9 - r.top) / (H * .62), 0, 1) : 0;
+          g.cur += (target - g.cur) * .14; if (Math.abs(target - g.cur) < .002) g.cur = target;
+          set(g, g.cur);
+        }
+      });
+      requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+  }
   // coming back from a sub page (or from the wrapper's nav): open in the right theme, at the saved place
   function resumeFlow() {
     if (!qs.has('resume')) return;
@@ -1613,7 +1659,7 @@ body.D #rulerTip{font-size:16px}
 
   async function start() {
     try { await doc.fonts.ready; await doc.fonts.load('15px "Courier Prime"'); } catch (e) { /* fonts optional */ }
-    initCipher(); fillLC(); layoutRuler(); setupReveals(); slides(); setupMap(); setupFlow(); setupPlaces(); setupDarkPins(); if (!CAP) resumeFlow();
+    initCipher(); fillLC(); layoutRuler(); setupReveals(); slides(); setupMap(); setupFlow(); setupPlaces(); setupDarkPins(); setupDarkDraw(); if (!CAP) resumeFlow();
     await prepFlashes();
     if (CAP) { requestAnimationFrame(() => { capture(); requestAnimationFrame(tick); }); return; }
     update(); requestAnimationFrame(tick);
