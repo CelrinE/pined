@@ -1,6 +1,8 @@
 <!doctype html>
 <html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>PINed</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#000;color-scheme:dark}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#000}}
@@ -9,11 +11,18 @@ html,body{margin:0;height:100%;background:var(--bg);overflow:hidden}
 .stage{position:fixed;inset:0;overflow:hidden}
 .frame{position:absolute;left:50%;top:50%;width:1920px;height:1080px;transform-origin:0 0}
 iframe{border:0;width:1920px;height:1080px;display:block;background:#000}
-/* page transitions: a veil of horizontal slices (the glitch wipe) that covers the page while the next one loads */
+/* page transitions: a veil that covers the page while the next one loads */
 #veil{position:absolute;left:0;top:0;width:1920px;height:1080px;pointer-events:none;visibility:hidden;overflow:hidden}
 #veil .sl{position:absolute;left:0;width:1920px;will-change:transform}
 #veil .gl{position:absolute;left:0;top:0;width:1920px;height:2px;opacity:0}
 #veil .fl{position:absolute;left:0;top:0;width:1920px;height:1080px;opacity:0}
+/* the glitch (map -> sub page): corrupted bars, scanlines, a tracking band, pixel blocks, error fragments */
+#gx{position:absolute;left:0;top:0;width:1920px;height:1080px}
+#gx .gs{position:absolute;left:0;width:1920px;will-change:transform}
+#gx .scan{position:absolute;left:0;top:0;width:1920px;height:1080px;background:repeating-linear-gradient(0deg,rgba(0,0,0,.3) 0,rgba(0,0,0,.3) 1px,rgba(0,0,0,0) 1px,rgba(0,0,0,0) 3px);opacity:0}
+#gx .trk{position:absolute;left:0;top:0;width:1920px;height:130px;background:linear-gradient(rgba(255,255,255,0),rgba(255,255,255,.28) 50%,rgba(255,255,255,0));mix-blend-mode:screen;opacity:0}
+#gx .gb{position:absolute;display:none}
+#gx .gt{position:absolute;display:none;white-space:pre;font:700 24px/1 'Courier Prime','Courier New',monospace;letter-spacing:.06em}
 </style></head>
 <body>
 <div class="stage"><div class="frame" id="fr"><iframe id="pf" src="prototype.html" title="PINed, 1920 by 1080"></iframe><div id="veil" aria-hidden="true"></div></div></div>
@@ -26,12 +35,13 @@ iframe{border:0;width:1920px;height:1080px;display:block;background:#000}
   pf.addEventListener('load', function(){ try{ pf.focus(); }catch(e){} });
 
   // ---------------------------------------------------------------- router
-  // Pages ask for a move with PIN_GO(dest, opts) (flow.js). effect: 'glitch' = flash + sliced wipe, 'fade' = plain cross-fade,
-  // 'dark' = the screen is already dark (a finished peel), so the veil appears at once and only fades away.
+  // Pages ask for a move with PIN_GO(dest, opts) (flow.js). effect: 'glitch' = the page breaks up like a signal error
+  // (map -> sub page), 'fade' = plain cross-fade, 'dark' = the screen is already dark (a finished peel), so the veil
+  // appears at once and only fades away. With reduced motion every effect becomes a short cross-fade.
   var veil=document.getElementById('veil'), N=12, SH=1080/N, slices=[], lines=[], flash, busy=false;
   var REDUCE=matchMedia('(prefers-reduced-motion: reduce)').matches;
   var EASE='cubic-bezier(.76,0,.24,1)';
-  var ORDER=[7,2,10,0,5,11,3,8,1,9,4,6];          // fixed shuffle, so the wipe always looks the same
+  var ORDER=[7,2,10,0,5,11,3,8,1,9,4,6];
   for(var i=0;i<N;i++){ var s=document.createElement('div'); s.className='sl'; s.style.top=(i*SH)+'px'; s.style.height=(SH+1)+'px'; veil.appendChild(s); slices.push(s); }
   flash=document.createElement('div'); flash.className='fl'; veil.appendChild(flash);
   for(var j=0;j<3;j++){ var g=document.createElement('div'); g.className='gl'; veil.appendChild(g); lines.push(g); }
@@ -48,6 +58,7 @@ iframe{border:0;width:1920px;height:1080px;display:block;background:#000}
   function anim(el,kf,opt){ return el.animate(kf,Object.assign({fill:'forwards'},opt)).finished; }
   function resetVeil(){
     veil.getAnimations({subtree:true}).forEach(function(a){ a.cancel(); });
+    glitchEnd();
     veil.style.visibility='hidden'; veil.style.opacity='1';
     slices.forEach(function(s){ s.style.transform='translateX(-105%)'; });
   }
@@ -77,12 +88,188 @@ iframe{border:0;width:1920px;height:1080px;display:block;background:#000}
     });
     return Promise.all(ps);
   }
-  // wait until the new page says it has drawn (it sets data-ready); give up after 4.5 s
-  function ready(win){
+
+  // ---------------------------------------------------------------- glitch
+  // The page itself breaks: horizontal tears and a red / green / blue split are applied to the live page through an SVG
+  // filter, the whole frame shakes, and on top of it run corrupted bars of random heights (they stutter in four to six
+  // steps and flash accent colors), pixel blocks, scanlines, a tracking band and error fragments in the site's own
+  // vocabulary. Everything is a function of (progress, 45 ms tick) with a seeded random, so a frame can be reproduced.
+  // Safety: one single full-frame brightness flash per transition, no strobing; reduced motion skips all of it.
+  var IN_MS=640, OUT_MS=560, TICK=45;
+  var gx=document.createElement('div'); gx.id='gx'; veil.appendChild(gx);
+  var ERRS=['ERR 0x1740','NAP −6.76 m','Q_in > Q_out','SIGNAL LOST','26% < NAP','P=ρ·g·Q·H/η','LIFT.FAIL','0x1612  0x1932','∑Q_in − ∑Q_out ≠ 0','KINDERDIJK.sys','[ ERR 1421 ]','NAP+0.00'];
+  var FX, FXOFF=false;   // SVG filter handles, built on first use (null = this browser can't do it; FXOFF = it was too slow here). The bars and blocks still run.
+  function fx(){
+    if(FX!==undefined) return FX;
+    try{
+      var s=document.createElementNS('http://www.w3.org/2000/svg','svg');
+      s.setAttribute('width','0'); s.setAttribute('height','0'); s.setAttribute('aria-hidden','true');
+      s.style.cssText='position:absolute;width:0;height:0;pointer-events:none';
+      s.innerHTML='<filter id="glf" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB">'+
+        '<feTurbulence id="glt" type="fractalNoise" baseFrequency="0 0.03" numOctaves="2" seed="3" result="n0"/>'+
+        '<feColorMatrix in="n0" type="matrix" values="1 0 0 0 0  0 0 0 0 0.5  0 0 1 0 0  0 0 0 0 1" result="n1"/>'+
+        '<feComponentTransfer in="n1" result="n2"><feFuncR type="discrete" tableValues="0.5 0.5 0.5 0.06 0.5 0.5 0.94 0.5 0.5 0.28 0.5 0.72 0.5"/></feComponentTransfer>'+
+        '<feDisplacementMap id="gld" in="SourceGraphic" in2="n2" scale="0" xChannelSelector="R" yChannelSelector="G" result="d"/>'+
+        '<feColorMatrix in="d" type="matrix" values="1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0" result="cr"/>'+
+        '<feColorMatrix in="d" type="matrix" values="0 0 0 0 0  0 1 0 0 0  0 0 0 0 0  0 0 0 1 0" result="cg"/>'+
+        '<feColorMatrix in="d" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 1 0 0  0 0 0 1 0" result="cb"/>'+
+        '<feOffset id="glr" in="cr" dx="0" dy="0" result="ro"/>'+
+        '<feOffset id="glb" in="cb" dx="0" dy="0" result="bo"/>'+
+        '<feBlend in="ro" in2="cg" mode="screen" result="rg"/>'+
+        '<feBlend in="rg" in2="bo" mode="screen"/></filter>';
+      document.body.appendChild(s);
+      FX={svg:s,turb:s.querySelector('#glt'),disp:s.querySelector('#gld'),r:s.querySelector('#glr'),b:s.querySelector('#glb')};
+      if(!FX.turb||!FX.disp||!FX.r||!FX.b) FX=null;
+    }catch(e){ FX=null; }
+    return FX;
+  }
+  function rng(seed){ var v=seed>>>0; return function(){ v=(Math.imul(v,1664525)+1013904223)>>>0; return v/4294967296; }; }
+  function clamp(v,a,b){ return v<a?a:v>b?b:v; }
+  function pal(t){
+    return t==='D'
+      ? {bg:'#1d212b', acc:['#c6fd54','#8fbbe6','#e45851','#edd9cf'], txt:['#c6fd54','#8fbbe6','#edd9cf']}
+      : {bg:'#edd9cf', acc:['#e45851','#8fbbe6','#c6fd54','#1c1028'], txt:['#1c1028','#e45851','#1c1028']};
+  }
+  var cur=null;
+  function clearRun(r){ if(r&&r.root&&r.root.parentNode) r.root.parentNode.removeChild(r.root); }
+  function glitchEnd(){
+    clearRun(cur); cur=null;
+    pf.style.filter=''; pf.style.transform='';
+  }
+  function plan(kind,tn,seed){
+    var R=rng(seed), P=pal(tn), root=document.createElement('div');
+    root.style.cssText='position:absolute;left:0;top:0;width:1920px;height:1080px';
+    var run={kind:kind,tone:tn,P:P,seed:seed,root:root,sl:[],bl:[],tx:[],lastTk:-99,flash:3+Math.floor(R()*4)};
+    // bars of random heights that cover the page
+    var y=0, h, el;
+    while(y<1080){
+      h=Math.round(14+R()*R()*180);
+      if(y+h>1080||1080-(y+h)<14) h=1080-y;
+      el=document.createElement('div'); el.className='gs'; el.style.top=y+'px'; el.style.height=(h+1)+'px'; el.style.background=P.bg; root.appendChild(el);
+      var sS=R()*.5, dD=Math.min(.2+R()*.32,1-sS);
+      run.sl.push({el:el,hh:h,dir:R()<.5?-1:1,s:sS,d:dD,n:3+Math.floor(R()*4)});
+      y+=h;
+    }
+    run.scan=document.createElement('div'); run.scan.className='scan'; root.appendChild(run.scan);
+    run.trk=document.createElement('div'); run.trk.className='trk'; root.appendChild(run.trk);
+    // pixel blocks: small squares in clusters, thin long bars, a few very wide hairlines
+    var nb=kind==='in'?54:34, k, c, b, kindOf, x0, y0;
+    for(k=0;k<nb;k++){
+      kindOf=R();
+      el=document.createElement('div'); el.className='gb';
+      if(kindOf<.55){ var sz=8+Math.floor(R()*16); b={w:sz,h:sz}; }
+      else if(kindOf<.85){ b={w:60+Math.floor(R()*320),h:3+Math.floor(R()*8)}; }
+      else { b={w:420+Math.floor(R()*820),h:2+Math.floor(R()*3)}; }
+      b.x=Math.floor(R()*(1920-b.w)); b.y=Math.floor(R()*(1080-b.h));
+      if(kindOf<.55 && k>0 && R()<.6){ var pb=run.bl[k-1]; b.x=clamp(pb.x+Math.floor((R()-.5)*120),0,1900); b.y=clamp(pb.y+Math.floor((R()-.5)*70),0,1060); }
+      b.t=R()*.86; b.life=.05+R()*.17; b.col=P.acc[Math.floor(R()*P.acc.length)]; b.el=el; b.on=false;
+      el.style.left=b.x+'px'; el.style.top=b.y+'px'; el.style.width=b.w+'px'; el.style.height=b.h+'px'; el.style.background=b.col;
+      root.appendChild(el); run.bl.push(b);
+    }
+    // error fragments, each with a red / blue ghost so they read as split channels
+    var nt=kind==='in'?8:5, t;
+    for(k=0;k<nt;k++){
+      el=document.createElement('div'); el.className='gt';
+      t={str:ERRS[Math.floor(R()*ERRS.length)],x:24+Math.floor(R()*1500),y:70+Math.floor(R()*900),sz:18+Math.floor(R()*18),t:.04+R()*.8,life:.07+R()*.14,col:P.txt[Math.floor(R()*P.txt.length)],el:el,on:false};
+      el.textContent=t.str; el.style.left=t.x+'px'; el.style.top=t.y+'px'; el.style.fontSize=t.sz+'px'; el.style.color=t.col;
+      el.style.textShadow='-3px 0 rgba(228,88,81,.9), 3px 0 rgba(143,187,230,.9)';
+      root.appendChild(el); run.tx.push(t);
+    }
+    return run;
+  }
+  // draws one frame. u = progress 0..1, tk = 45 ms tick (random state changes only when the tick changes)
+  function render(run,u,tk){
+    var T=rng(run.seed*7919+tk*104729+1), inK=run.kind==='in', newTick=(tk!==run.lastTk);
+    run.lastTk=tk;
+    // bars. The area of bars that flash an accent color is capped (18% of the frame per tick) so the glitch never turns into a strobe
+    var budget=1920*1080*.18;
+    run.sl.forEach(function(b){
+      var p=clamp((u-b.s)/b.d,0,1), q=Math.round(p*b.n)/b.n, moving=p>0&&p<1;
+      var x=inK?b.dir*(1-q)*115:-b.dir*q*115;
+      b.el.style.transform='translate3d('+x.toFixed(1)+'%,0,0)';
+      if(newTick){
+        b.el.style.left=(moving?Math.round((T()-.5)*44):0)+'px';
+        var bad=moving&&T()<.2&&budget>=b.hh*1920;
+        if(bad) budget-=b.hh*1920;
+        b.el.style.background=bad?run.P.acc[Math.floor(T()*run.P.acc.length)]:run.P.bg;
+      }
+    });
+    // scanlines and the tracking band
+    run.scan.style.opacity=((inK?clamp(u/.3,0,1):1-u)*.9).toFixed(2);
+    run.trk.style.opacity=(u>0&&u<1?'.95':'0');
+    if(newTick) run.trk.style.transform='translateY('+Math.round((u*1.3-.2)*1080)+'px)';
+    // blocks and fragments
+    run.bl.forEach(function(b){ var on=u>=b.t&&u<b.t+b.life; if(on!==b.on){ b.on=on; b.el.style.display=on?'block':'none'; } });
+    run.tx.forEach(function(t){ var on=u>=t.t&&u<t.t+t.life; if(on!==t.on){ t.on=on; t.el.style.display=on?'block':'none'; } });
+    // the live page: tears, channel split, shake, one brightness flash
+    if(newTick){
+      var a=(inK?Math.min(1,u/.36):Math.pow(1-u,1.3))*(.65+.35*T());
+      var f=FXOFF?null:fx(), flashNow=inK&&tk===run.flash;
+      var tseed=1+Math.floor(T()*97), tfreq=0.012+0.05*T(), tscale=a*150*(T()<.25?1.6:1), sp=(8+22*T())*a, sg=T()<.5?-1:1, sdy=(T()-.5)*6*a;
+      if(f){
+        // the filter is the expensive part: it is refreshed every second tick (about 11 times a second)
+        if(tk%2===0||!run.filtered){
+          f.turb.setAttribute('seed',String(tseed)); f.turb.setAttribute('baseFrequency','0 '+tfreq.toFixed(4));
+          f.disp.setAttribute('scale',tscale.toFixed(1));
+          f.r.setAttribute('dx',(-sg*sp).toFixed(1)); f.b.setAttribute('dx',(sg*sp).toFixed(1)); f.r.setAttribute('dy',sdy.toFixed(1));
+          run.filtered=true;
+        }
+        pf.style.filter='url(#glf)'+(flashNow?' brightness(1.9) contrast(1.35)':'');
+      } else if(flashNow){ pf.style.filter='brightness(1.9) contrast(1.35)'; } else { pf.style.filter=''; }
+      pf.style.transform='translate('+((T()-.5)*2*a*16).toFixed(1)+'px,'+((T()-.5)*2*a*7).toFixed(1)+'px)';
+    }
+  }
+  function newSeed(){ return (Date.now()&0xffffff)+1; }
+  function glitch(kind,tn,seed,D){
+    return new Promise(function(done){
+      var run=plan(kind,tn,seed);
+      gx.appendChild(run.root);
+      var old=cur; cur=run; clearRun(old);          // seamless: a new 'out' run starts fully covered, like the 'in' run ended
+      veil.style.visibility='visible';
+      var t0=performance.now(), prev=t0, slow=0, seen=0;
+      (function frame(now){
+        var u=clamp((now-t0)/D,0,1), dt=now-prev; prev=now;
+        // performance guard: if the tears and channel split make frames slow (software rendering, weak GPU), drop only that
+        // part for the rest of the session; the bars, blocks, scanlines and shake keep running
+        if(!FXOFF&&FX&&seen<10){ seen++; if(dt>90) slow++; if(dt>250||slow>=2){ FXOFF=true; pf.style.filter=''; } }
+        try{ render(run,u,Math.floor((now-t0)/TICK)); }catch(e){ u=1; }
+        if(u<1) requestAnimationFrame(frame); else done();
+      })(t0);
+    });
+  }
+
+  // while the next page loads the veil stays alive (bars jitter, blocks and fragments flicker) so it never looks stuck
+  function hold(run,until){
+    return new Promise(function(done){
+      var t0=performance.now(), settled=false, lastTk=-1;
+      until.then(function(){ settled=true; });
+      pf.style.filter=''; pf.style.transform='';
+      (function frame(now){
+        var tk=Math.floor((now-t0)/TICK);
+        if(tk!==lastTk){
+          lastTk=tk;
+          var T=rng(run.seed*31+tk*977+5);
+          run.sl.forEach(function(b){ b.el.style.left=(T()<.3?Math.round((T()-.5)*30):0)+'px'; });
+          run.bl.forEach(function(b){ var on=T()<.07; if(on!==b.on){ b.on=on; b.el.style.display=on?'block':'none'; } });
+          run.tx.forEach(function(t){ var on=T()<.06; if(on!==t.on){ t.on=on; t.el.style.display=on?'block':'none'; } });
+          run.trk.style.transform='translateY('+Math.round(((now-t0)%900)/900*1300-150)+'px)';
+        }
+        if(settled&&now-t0>=120) done(); else requestAnimationFrame(frame);
+      })(t0);
+    });
+  }
+  // load the next page; resolves when it has drawn (data-ready, set after fonts) or has fully loaded, whichever comes first
+  function navigate(u){
     return new Promise(function(res){
-      var t0=Date.now();
+      var target=new URL(u,location.href).href, done=false, t0=Date.now();
+      function fin(){ if(done) return; done=true; pf.removeEventListener('load',onload); res(); }
+      function onload(){ fin(); }
+      pf.addEventListener('load',onload);
+      pf.src=u;
       (function poll(){
-        try{ if(win.document.documentElement.getAttribute('data-ready')==='1'||Date.now()-t0>4500) return res(); }catch(e){ return res(); }
+        if(done) return;
+        try{ var w=pf.contentWindow; if(w.location.href===target&&w.document.documentElement.getAttribute('data-ready')==='1') return fin(); }catch(e){ /* not same-origin: wait for load */ }
+        if(Date.now()-t0>4500) return fin();
         setTimeout(poll,40);
       })();
     });
@@ -92,18 +279,21 @@ iframe{border:0;width:1920px;height:1080px;display:block;background:#000}
       o=o||{};
       if(busy) return;
       busy=true;
-      var effect=o.effect||'fade', u=window.PIN_URL(dest,o);
-      tone(o.tone||'L');
-      cover(effect).then(function(){
-        return new Promise(function(res){
-          function once(){ pf.removeEventListener('load',once); res(); }
-          pf.addEventListener('load',once);
-          pf.src=u;
-        });
-      }).then(function(){ return ready(pf.contentWindow); })
-        .then(function(){ return reveal(effect); })
+      var effect=o.effect||'fade', u=window.PIN_URL(dest,o), tn=o.tone||'L';
+      var useG=effect==='glitch'&&!matchMedia('(prefers-reduced-motion: reduce)').matches;
+      tone(tn);
+      (useG?glitch('in',tn,newSeed(),IN_MS):cover(effect)).then(function(){
+        var nav=navigate(u);
+        return useG?hold(cur,nav):nav;
+      }).then(function(){ return useG?glitch('out',tn,newSeed(),OUT_MS):reveal(effect); })
         .then(function(){ resetVeil(); busy=false; try{ pf.focus(); }catch(e){} });
-    }
+    },
+    // for reviewing a single frame of the glitch: PINRouter.preview('in', 0.5, 'L', 7, 5); PINRouter.unpreview()
+    preview:function(kind,u,tn,seed,tk){
+      glitchEnd(); var run=plan(kind,tn||'L',seed||7); cur=run; gx.appendChild(run.root);
+      veil.style.visibility='visible'; render(run,u,tk||5);
+    },
+    unpreview:function(){ resetVeil(); }
   };
   resetVeil();
 })();
