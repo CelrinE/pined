@@ -7,9 +7,10 @@
 :root{--bg:#000;color-scheme:dark}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#000}}
 :root[data-theme="dark"]{--bg:#000}
-html,body{margin:0;height:100%;background:var(--bg);overflow:hidden}
+html,body{margin:0;height:100%;background:var(--bg);overflow:hidden;transition:background-color .4s}
 .stage{position:fixed;inset:0;overflow:hidden}
-.frame{position:absolute;left:50%;top:50%;width:1920px;height:1080px;transform-origin:0 0}
+/* the 1920x1080 design; fit() places and scales it (never above 100%) */
+.frame{position:absolute;left:0;top:0;width:1920px;height:1080px;transform-origin:0 0}
 iframe{border:0;width:1920px;height:1080px;display:block;background:#000}
 /* page transitions: a veil that covers the page while the next one loads */
 #veil{position:absolute;left:0;top:0;width:1920px;height:1080px;pointer-events:none;visibility:hidden;overflow:hidden}
@@ -30,9 +31,29 @@ iframe{border:0;width:1920px;height:1080px;display:block;background:#000}
 <script>
 (function(){
   var st=document.querySelector('.stage'), fr=document.getElementById('fr'), pf=document.getElementById('pf');
-  function fit(){ var k=Math.min(st.clientWidth/1920, st.clientHeight/1080); fr.style.transform='scale('+k+') translate(-50%,-50%)'; }
+  // The frame is the 1920x1080 design. It is shown at its real size, centered, and only scaled down when the window is
+  // smaller, so a bigger window never zooms the page. It sits on whole pixels, so text stays sharp.
+  function fit(){
+    var W=st.clientWidth, H=st.clientHeight, k=Math.min(1, W/1920, H/1080);
+    var x=Math.round((W-1920*k)/2), y=Math.round((H-1080*k)/2);
+    fr.style.transform='translate('+x+'px,'+y+'px) scale('+k+')';
+  }
   addEventListener('resize', fit); fit();
   pf.addEventListener('load', function(){ try{ pf.focus(); }catch(e){} });
+  // The space around the frame takes the page's own background instead of black: blush for Light pages, charcoal for Dark
+  // ones. Every page marks its theme on <body> (class L or D); the main page switches it when it is peeled or resticked.
+  var PAGE_BG={L:'#edd9cf', D:'#1d212b'}, bgWatch=null;
+  function syncBg(){
+    var c='#000';
+    try{ var b=pf.contentDocument&&pf.contentDocument.body; if(b) c=b.classList.contains('D')?PAGE_BG.D:b.classList.contains('L')?PAGE_BG.L:c; }catch(e){}
+    document.documentElement.style.setProperty('--bg', c);
+  }
+  function watchPage(){
+    syncBg();
+    try{ if(bgWatch) bgWatch.disconnect(); bgWatch=new MutationObserver(syncBg); bgWatch.observe(pf.contentDocument.body, {attributes:true, attributeFilter:['class']}); }catch(e){}
+  }
+  pf.addEventListener('load', watchPage);
+  watchPage();   // the first page may have loaded before this script ran (it waits for flow.js)
 
   // ---------------------------------------------------------------- router
   // Pages ask for a move with PIN_GO(dest, opts) (flow.js). effect: 'glitch' = the page breaks up like a signal error
@@ -283,7 +304,7 @@ iframe{border:0;width:1920px;height:1080px;display:block;background:#000}
       var useG=effect==='glitch'&&!matchMedia('(prefers-reduced-motion: reduce)').matches;
       tone(tn);
       (useG?glitch('in',tn,newSeed(),IN_MS):cover(effect)).then(function(){
-        var nav=navigate(u);
+        var nav=navigate(u).then(watchPage);   // the color around the frame changes while the veil still covers it
         return useG?hold(cur,nav):nav;
       }).then(function(){ return useG?glitch('out',tn,newSeed(),OUT_MS):reveal(effect); })
         .then(function(){ resetVeil(); busy=false; try{ pf.focus(); }catch(e){} });
