@@ -333,10 +333,10 @@ body.D #rulerTip{font-size:16px}
 .go.cour{display:block;text-align:left}
 #L4 .prow.go:hover{color:var(--ink)}
 #L4 .mk.go{z-index:3}
-/* places: hovering a place (list row or map pin) enlarges it and shrinks and fades the others */
-#L4 .mk{pointer-events:none;transition:transform .35s var(--reveal),opacity .3s,background .3s,color .3s}
+/* places: hovering a place (list row or map pin) enlarges it and shrinks and fades the others; a pin is plain black until it is hovered, then it grows and shows its color and letter */
+#L4 .mk{pointer-events:none;background:var(--ink);color:transparent;transition:transform .35s var(--reveal),opacity .3s,background .3s,color .3s}
 #L4 .prow{cursor:pointer;transform-origin:0 50%;transition:color .3s,transform .35s var(--reveal),opacity .3s}
-#L4 .mk.hv{transform:scale(1.7);z-index:4}
+#L4 .mk.hv{background:var(--red);color:var(--ink);transform:scale(2.2);z-index:4}
 #L4 .prow.hv{transform:scale(1.1);color:var(--ink)}
 #L4.phov .mk:not(.hv){transform:scale(.7);opacity:.35}
 #L4.phov .prow:not(.hv){transform:scale(.92);opacity:.38}
@@ -1504,8 +1504,9 @@ body.D #rulerTip{font-size:16px}
   // ------------------------------------------------------------ places: hover on the Light map list and pins
   // A place is a list row and a pin with the same letter. Hovering either one enlarges both and shrinks and fades the others.
   // Pins are click-through; one layer (.zhit) finds the pin: its collider is a square twice the pin's size (one pin size to each
-  // side of the center), measured on the unscaled size so the collider does not grow or shrink with the hover effect. The nearest
-  // pin wins where colliders overlap.
+  // side of the center), measured on the unscaled size so the collider does not shrink with the dimming. A hovered pin grows past
+  // that square (2.2x is wider than 2x), so its visible body counts as collider too and the pin does not drop out under the pointer.
+  // The nearest pin wins where colliders overlap.
   function setupPlaces() {
     const L4 = $('#L4'), hit = $('#L4 .zhit');
     if (!L4 || !hit) return;
@@ -1524,9 +1525,9 @@ body.D #rulerTip{font-size:16px}
     function pinAt(x, y) {
       let best = null, bd = 1e9;
       mks.forEach(m => {
-        const r = m.getBoundingClientRect(), s = m.offsetWidth;
+        const r = m.getBoundingClientRect(), half = Math.max(m.offsetWidth, r.width / 2);
         const dx = x - (r.left + r.width / 2), dy = y - (r.top + r.height / 2);
-        if (Math.abs(dx) <= s && Math.abs(dy) <= s) { const d = dx * dx + dy * dy; if (d < bd) { bd = d; best = m.dataset.k; } }
+        if (Math.abs(dx) <= half && Math.abs(dy) <= half) { const d = dx * dx + dy * dy; if (d < bd) { bd = d; best = m.dataset.k; } }
       });
       return best;
     }
