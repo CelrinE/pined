@@ -333,6 +333,15 @@ body.D #rulerTip{font-size:16px}
 .go.cour{display:block;text-align:left}
 #L4 .prow.go:hover{color:var(--ink)}
 #L4 .mk.go{z-index:3}
+/* places: hovering a place (list row or map pin) enlarges it and shrinks and fades the others */
+#L4 .mk{pointer-events:none;transition:transform .35s var(--reveal),opacity .3s,background .3s,color .3s}
+#L4 .prow{cursor:pointer;transform-origin:0 50%;transition:color .3s,transform .35s var(--reveal),opacity .3s}
+#L4 .mk.hv{transform:scale(1.7);z-index:4}
+#L4 .prow.hv{transform:scale(1.1);color:var(--ink)}
+#L4.phov .mk:not(.hv){transform:scale(.7);opacity:.35}
+#L4.phov .prow:not(.hv){transform:scale(.92);opacity:.38}
+#L4.dimchip .mchip.on{opacity:.3}
+@media (prefers-reduced-motion: reduce){#L4 .mk,#L4 .prow{transition:none}}
 .gxs .gx .go{pointer-events:auto}
 #D4 .lm.vis{box-shadow:0 0 0 2px var(--char),0 0 0 4px var(--lime)}
 </style></head>
@@ -1492,6 +1501,40 @@ body.D #rulerTip{font-size:16px}
     const dp = $('#D4 .pop[data-b="0"]');
     if (dp && dp.lastElementChild) dp.lastElementChild.appendChild(bracketButton(null, '원리 보기', "display:block;margin-top:14px;font:700 18px/1.4 'Courier Prime',monospace;color:var(--lime)", () => goSub(true)));
   }
+  // ------------------------------------------------------------ places: hover on the Light map list and pins
+  // A place is a list row and a pin with the same letter. Hovering either one enlarges both and shrinks and fades the others.
+  // Pins are click-through; one layer (.zhit) finds the pin: its collider is a square twice the pin's size (one pin size to each
+  // side of the center), measured on the unscaled size so the collider does not grow or shrink with the hover effect. The nearest
+  // pin wins where colliders overlap.
+  function setupPlaces() {
+    const L4 = $('#L4'), hit = $('#L4 .zhit');
+    if (!L4 || !hit) return;
+    const mks = $$('#L4 .mk'), rows = $$('#L4 .prow');
+    let hk = null;
+    function setHover(k) {
+      if (k === hk) return;
+      hk = k;
+      L4.classList.toggle('phov', !!k);
+      mks.forEach(m => m.classList.toggle('hv', m.dataset.k === k));
+      rows.forEach(r => r.classList.toggle('hv', r.dataset.k === k));
+      const act = $('#L4 .mk.on');
+      L4.classList.toggle('dimchip', !!k && !!act && act.dataset.k !== k);   // the active place's name chip dims with its pin
+      hit.style.cursor = k ? 'pointer' : '';
+    }
+    function pinAt(x, y) {
+      let best = null, bd = 1e9;
+      mks.forEach(m => {
+        const r = m.getBoundingClientRect(), s = m.offsetWidth;
+        const dx = x - (r.left + r.width / 2), dy = y - (r.top + r.height / 2);
+        if (Math.abs(dx) <= s && Math.abs(dy) <= s) { const d = dx * dx + dy * dy; if (d < bd) { bd = d; best = m.dataset.k; } }
+      });
+      return best;
+    }
+    hit.addEventListener('pointermove', e => setHover(pinAt(e.clientX, e.clientY)));
+    hit.addEventListener('pointerleave', () => setHover(null));
+    hit.addEventListener('click', e => { if (pinAt(e.clientX, e.clientY) === 'A') goSub(false); });
+    rows.forEach(r => { r.addEventListener('pointerenter', () => setHover(r.dataset.k)); r.addEventListener('pointerleave', () => setHover(null)); });
+  }
   // coming back from a sub page (or from the wrapper's nav): open in the right theme, at the saved place
   function resumeFlow() {
     if (!qs.has('resume')) return;
@@ -1504,7 +1547,7 @@ body.D #rulerTip{font-size:16px}
 
   async function start() {
     try { await doc.fonts.ready; await doc.fonts.load('15px "Courier Prime"'); } catch (e) { /* fonts optional */ }
-    initCipher(); fillLC(); layoutRuler(); setupReveals(); slides(); setupMap(); setupFlow(); if (!CAP) resumeFlow();
+    initCipher(); fillLC(); layoutRuler(); setupReveals(); slides(); setupMap(); setupFlow(); setupPlaces(); if (!CAP) resumeFlow();
     await prepFlashes();
     if (CAP) { requestAnimationFrame(() => { capture(); requestAnimationFrame(tick); }); return; }
     update(); requestAnimationFrame(tick);
