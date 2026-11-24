@@ -333,12 +333,13 @@ body.D #rulerTip{font-size:16px}
 .go.cour{display:block;text-align:left}
 #L4 .prow.go:hover{color:var(--ink)}
 #L4 .mk.go{z-index:3}
-/* places: hovering a place (list row or map pin) enlarges it and shrinks and fades the others; a pin is plain black until it is hovered, then it grows and shows its color and letter */
-#L4 .mk{pointer-events:none;background:var(--ink);color:transparent;transition:transform .35s var(--reveal),opacity .3s,background .3s,color .3s}
+/* places: hovering a place (list row or map pin) enlarges it and shrinks and fades the others; a pin is a small plain black square until it is hovered, then it grows and shows its color and letter. Scrolling gives the same look to the place of the current beat */
+#L4{--mk-rest:.6}   /* resting size of a pin as a share of its 18 px box: 60%, which is 40% smaller */
+#L4 .mk{pointer-events:none;background:var(--ink);color:transparent;transform:scale(var(--mk-rest));transition:transform .35s var(--reveal),opacity .3s,background .3s,color .3s}
 #L4 .prow{cursor:pointer;transform-origin:0 50%;transition:color .3s,transform .35s var(--reveal),opacity .3s}
 #L4 .mk.hv{background:var(--red);color:var(--ink);transform:scale(2.2);z-index:4}
 #L4 .prow.hv{transform:scale(1.1);color:var(--ink)}
-#L4.phov .mk:not(.hv){transform:scale(.7);opacity:.35}
+#L4.phov .mk:not(.hv){transform:scale(calc(var(--mk-rest) * .7));opacity:.35}
 #L4.phov .prow:not(.hv){transform:scale(.92);opacity:.38}
 #L4.dimchip .mchip.on{opacity:.3}
 @media (prefers-reduced-motion: reduce){#L4 .mk,#L4 .prow{transition:none}}
@@ -1090,6 +1091,7 @@ body.D #rulerTip{font-size:16px}
     if (k !== s4k) {
       const first = s4k < 0; s4k = k;
       $$('#L4 .mk, #L4 .prow').forEach(e => e.classList.toggle('on', e.dataset.k === BEAT_KEYS[k]));
+      if (placesFocus) placesFocus();   // the place of this beat gets the hovered look
       $$('#L4 .mchip, #L4 .pop').forEach(e => e.classList.toggle('on', +e.dataset.b === k));
       $$('#L4 .tly').forEach(e => { const b = +e.dataset.b; e.classList.toggle('on', b === k); e.classList.toggle('past', b < k); });
       $('#tlL .tlbar i').style.width = (k * 140) + 'px';
@@ -1502,26 +1504,32 @@ body.D #rulerTip{font-size:16px}
     if (dp && dp.lastElementChild) dp.lastElementChild.appendChild(bracketButton(null, '원리 보기', "display:block;margin-top:14px;font:700 18px/1.4 'Courier Prime',monospace;color:var(--lime)", () => goSub(true)));
   }
   // ------------------------------------------------------------ places: hover on the Light map list and pins
-  // A place is a list row and a pin with the same letter. Hovering either one enlarges both and shrinks and fades the others.
-  // Pins are click-through; one layer (.zhit) finds the pin: its collider is a square twice the pin's size (one pin size to each
-  // side of the center), measured on the unscaled size so the collider does not shrink with the dimming. A hovered pin grows past
-  // that square (2.2x is wider than 2x), so its visible body counts as collider too and the pin does not drop out under the pointer.
+  // A place is a list row and a pin with the same letter. One place at a time shows the hovered look: its pin grows and shows its
+  // red and its letter, its row grows, and the other places shrink and fade. That is the place under the pointer or, when the pointer
+  // is on no place, the place of the current scroll beat (BEAT_KEYS). A beat change from scrolling takes the look back from the
+  // pointer; the pointer gets it again when it moves (an event with no movement, like the one a browser sends after a scroll, is not a hover).
+  // Pins are click-through; one layer (.zhit) finds the pin: its collider is a square twice the pin's 18 px box (one box size to
+  // each side of the center), measured on the unscaled box so it does not change with the resting size or the dimming (the resting
+  // pin is drawn at 60% of its box, so the collider is 3.3x the visible pin). A hovered pin grows past that square (2.2x is wider
+  // than 2x), so its visible body counts as collider too and the pin does not drop out under the pointer.
   // The nearest pin wins where colliders overlap.
+  var placesFocus = null;   // set by setupPlaces; s4() calls it when the beat changes
   function setupPlaces() {
     const L4 = $('#L4'), hit = $('#L4 .zhit');
     if (!L4 || !hit) return;
     const mks = $$('#L4 .mk'), rows = $$('#L4 .prow');
-    let hk = null;
-    function setHover(k) {
-      if (k === hk) return;
-      hk = k;
+    let hk = null, lx = -1, ly = -1;   // hk: the place under the pointer; lx, ly: where the pointer was last seen
+    function show() {
+      const beat = BEAT_KEYS[s4k] || null, k = hk || beat;
       L4.classList.toggle('phov', !!k);
       mks.forEach(m => m.classList.toggle('hv', m.dataset.k === k));
       rows.forEach(r => r.classList.toggle('hv', r.dataset.k === k));
-      const act = $('#L4 .mk.on');
-      L4.classList.toggle('dimchip', !!k && !!act && act.dataset.k !== k);   // the active place's name chip dims with its pin
-      hit.style.cursor = k ? 'pointer' : '';
+      L4.classList.toggle('dimchip', !!hk && !!beat && hk !== beat);   // the beat's name chip dims while the pointer is on another place
+      hit.style.cursor = hk ? 'pointer' : '';
     }
+    function setHover(k) { if (k !== hk) { hk = k; show(); } }
+    function moved(e) { const m = e.clientX !== lx || e.clientY !== ly; lx = e.clientX; ly = e.clientY; return m; }
+    placesFocus = () => { hk = null; show(); };
     function pinAt(x, y) {
       let best = null, bd = 1e9;
       mks.forEach(m => {
@@ -1531,10 +1539,14 @@ body.D #rulerTip{font-size:16px}
       });
       return best;
     }
-    hit.addEventListener('pointermove', e => setHover(pinAt(e.clientX, e.clientY)));
+    hit.addEventListener('pointermove', e => { if (moved(e)) setHover(pinAt(e.clientX, e.clientY)); });
     hit.addEventListener('pointerleave', () => setHover(null));
     hit.addEventListener('click', e => { if (pinAt(e.clientX, e.clientY) === 'A') goSub(false); });
-    rows.forEach(r => { r.addEventListener('pointerenter', () => setHover(r.dataset.k)); r.addEventListener('pointerleave', () => setHover(null)); });
+    rows.forEach(r => {
+      r.addEventListener('pointermove', e => { if (moved(e)) setHover(r.dataset.k); });
+      r.addEventListener('pointerleave', () => setHover(null));
+    });
+    show();
   }
   // coming back from a sub page (or from the wrapper's nav): open in the right theme, at the saved place
   function resumeFlow() {
