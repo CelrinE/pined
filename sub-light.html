@@ -1,0 +1,329 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PINed · 킨데르데이크 (Light)</title>
+<meta name="description" content="물 위에 늘어선 풍차 19기, 유네스코 세계유산 마을 킨데르데이크 여행 안내.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&family=Noto+Sans+KR:wght@300;400;500;700;800&family=Cutive+Mono&family=Courier+Prime:wght@400;700&display=block" rel="stylesheet">
+<style>
+:root{
+  --blush:#edd9cf; --paper:#fbf7f4; --ink:#1c1028; --red:#e45851; --redtext:#4a0a07; --redbig:#c43c35;
+  --char:#1d212b; --cream:#edd9cf; --lime:#c6fd54; --line:#5ea2e2;
+  --reveal:cubic-bezier(.16,1,.3,1); --wipe:cubic-bezier(.76,0,.24,1);
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+html{scrollbar-width:none}
+html::-webkit-scrollbar{display:none}
+body{position:relative;width:1920px;font-family:'Noto Sans KR',system-ui,sans-serif;-webkit-font-smoothing:antialiased;word-break:keep-all;overflow-x:hidden}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;text-align:left}
+h1,h2{font-weight:inherit}
+.b1::before{content:"["} .b2::before{content:"]"}
+button:hover .b1::before,button:focus-visible .b1::before{content:"("}
+button:hover .b2::before,button:focus-visible .b2::before{content:")"}
+.tb{white-space:pre}
+.act{padding:0}
+/* nav */
+.nav{position:fixed;left:0;top:0;width:1920px;height:102px}
+#navD{z-index:2;background:var(--char);color:var(--cream);box-shadow:inset 0 -1px 0 rgba(237,217,207,.16)}
+#navL{z-index:5;background:var(--blush);color:var(--ink);box-shadow:inset 0 -1px 0 rgba(28,16,40,.14)}
+.b1::before{content:"["} .b2::before{content:"]"}
+button:hover .b1::before,button:focus-visible .b1::before{content:"("}
+button:hover .b2::before,button:focus-visible .b2::before{content:")"}
+.nav .up{position:absolute;left:34px;top:20px;height:62px;padding:0 6px;display:flex;align-items:center;gap:10px;font:700 42px/1 'Courier Prime',monospace;transition:color .2s}
+.nav .up .caret{display:inline-block;transition:transform .35s var(--reveal)}
+.nav .up:hover,.nav .up:focus-visible{color:var(--redtext)}
+#navD .up:hover,#navD .up:focus-visible{color:var(--lime)}
+.nav .up:hover .caret,.nav .up:focus-visible .caret,.nav .up.lift .caret{transform:translateY(-7px)}
+.nav .wm{position:absolute;left:50%;top:21px;transform:translateX(-50%);font:700 46px/60px Inter,sans-serif;letter-spacing:-.01em}.nav .wm img{position:absolute;left:-97.5px;top:-13.4px;width:197.4px;height:73.5px;display:block;pointer-events:none}
+.nav .links{position:absolute;top:34px;display:flex;gap:26px}
+.nav .ln{font:500 17px/32px 'Noto Sans KR',sans-serif;opacity:.74;white-space:nowrap;transition:color .2s,opacity .2s}
+.nav .ln .b1::before,.nav .ln .b2::before{font-family:'Courier Prime',monospace}
+.nav .ln:hover,.nav .ln.on{opacity:1}
+#navL .ln.on,#navL .ln:hover{color:var(--redtext)}
+#navD .ln.on,#navD .ln:hover{color:var(--lime)}
+.nav .back{position:absolute;right:40px;top:30px;height:42px;font:700 20px/42px 'Courier Prime',monospace;letter-spacing:.04em}
+.nav .back:hover{color:var(--lime)}
+
+/* corner: cipher under the sticker, flap = the sticker's back */
+#cipher{position:fixed;left:0;top:0;z-index:6;pointer-events:none}
+body.peel #cipher{z-index:3}
+#flapw{position:fixed;left:0;top:0;width:1920px;height:100vh;z-index:7;pointer-events:none;filter:drop-shadow(-8px 10px 12px rgba(28,16,40,.26)) drop-shadow(-1px 2px 2px rgba(28,16,40,.2))}
+#flap{position:absolute;inset:0;background-color:#efe4da;background-repeat:no-repeat}
+#corner{position:fixed;right:0;top:0;width:150px;height:150px;z-index:7;cursor:grab;touch-action:none}
+#corner:active{cursor:grabbing}
+
+/* [ ^ ] in the same style as the menu */
+.nav .up{left:34px;top:34px;height:32px;padding:0;gap:0;font:500 17px/32px 'Noto Sans KR',sans-serif;opacity:.74}
+.nav .up .b1::before,.nav .up .b2::before,.nav .up .caret{font-family:'Courier Prime',monospace}
+.nav .up .caret{margin:0 .3em}
+.nav .up:hover,.nav .up:focus-visible{opacity:1}
+
+html,body{background:var(--blush)}
+body{color:var(--ink)}
+button:focus-visible{outline:2px solid var(--red);outline-offset:4px}
+#page{position:absolute;left:0;top:0;width:1920px;height:4640px;overflow:hidden;z-index:4;background:var(--blush)}
+#under{position:fixed;left:0;top:0;width:1920px;height:100vh;z-index:1;background:#1d212b url(img/sub/34b031a6.jpg) center/cover}
+#under::before{content:"";position:absolute;inset:0;background:rgba(20,21,29,.66)}
+#under::after{content:"";position:absolute;inset:0;background-image:linear-gradient(rgba(94,162,226,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(94,162,226,.06) 1px,transparent 1px);background-size:96px 96px}
+.tb:hover,.tb:focus-visible{color:var(--redtext)!important}
+.act:hover,.act:focus-visible{outline:1px solid var(--redtext);outline-offset:3px}
+.chipb:hover,.chipb:focus-visible{outline:1px solid var(--lime);outline-offset:3px}
+</style></head>
+<body class="L" style="height:4640px">
+<div id="under" aria-hidden="true"></div>
+<main id="page"><div style="position:absolute;left:40px;top:165px;width:1840px;height:903px;background:linear-gradient(#fbf7f4,#fbf7f4)"><div style="position:absolute;left:130px;top:0px;width:1px;height:768px;background:rgba(28,16,40,0.05)"></div><div style="position:absolute;left:260px;top:0px;width:1px;height:768px;background:rgba(28,16,40,0.05)"></div><div style="position:absolute;left:390px;top:0px;width:1px;height:768px;background:rgba(28,16,40,0.05)"></div><div style="position:absolute;left:520px;top:0px;width:1px;height:768px;background:rgba(28,16,40,0.05)"></div><div style="position:absolute;left:650px;top:0px;width:1px;height:768px;background:rgba(28,16,40,0.05)"></div><div style="position:absolute;left:780px;top:0px;width:1px;height:768px;background:rgba(28,16,40,0.05)"></div><div style="position:absolute;left:910px;top:0px;width:1px;height:768px;background:rgba(28,16,40,0.05)"></div><div style="position:absolute;left:1040px;top:0px;width:1px;height:768px;background:rgba(28,16,40,0.05)"></div><div style="position:absolute;left:1170px;top:0px;width:1px;height:768px;background:rgba(28,16,40,0.05)"></div><div style="position:absolute;left:1300px;top:0px;width:1px;height:768px;background:rgba(28,16,40,0.05)"></div><div style="position:absolute;left:1430px;top:0px;width:1px;height:768px;background:rgba(28,16,40,0.05)"></div><div style="position:absolute;left:1560px;top:0px;width:1px;height:768px;background:rgba(28,16,40,0.05)"></div><div style="position:absolute;left:1690px;top:0px;width:1px;height:768px;background:rgba(28,16,40,0.05)"></div><div style="position:absolute;left:1820px;top:0px;width:1px;height:768px;background:rgba(28,16,40,0.05)"></div><div style="position:absolute;left:0px;top:128px;width:1840px;height:1px;background:rgba(28,16,40,0.05)"></div><div style="position:absolute;left:0px;top:256px;width:1840px;height:1px;background:rgba(28,16,40,0.05)"></div><div style="position:absolute;left:0px;top:384px;width:1840px;height:1px;background:rgba(28,16,40,0.05)"></div><div style="position:absolute;left:0px;top:512px;width:1840px;height:1px;background:rgba(28,16,40,0.05)"></div><div style="position:absolute;left:0px;top:640px;width:1840px;height:1px;background:rgba(28,16,40,0.05)"></div><div style="position:absolute;left:60px;top:54px;white-space:pre;font-family:'Cutive Mono','Noto Sans KR',monospace;font-weight:400;font-size:20px;letter-spacing:1.163px;line-height:22px;color:#e45851">[ 02 / 여행지 · DESTINATION ]</div><h1 style="position:absolute;left:56px;top:104px;white-space:pre;font-family:Inter,'Noto Sans KR',sans-serif;font-weight:800;font-size:140px;letter-spacing:-5.083px;line-height:169px;color:#1c1028">KINDERDIJK</h1><div style="position:absolute;left:62px;top:330px;white-space:pre-wrap;width:900px;font-family:'Noto Sans KR',sans-serif;font-weight:500;font-size:34px;line-height:50px;color:#1c1028">물 위에 늘어선 풍차 19기,
+유네스코 세계유산 마을</div><div style="position:absolute;left:62px;top:490px;width:403px;height:69px"><div style="position:absolute;left:0px;top:0px;width:51px;height:69px"><div style="position:absolute;left:0px;top:0px;white-space:pre;font-family:'Cutive Mono','Noto Sans KR',monospace;font-weight:400;font-size:15px;letter-spacing:1.172px;line-height:17px;color:#6b5a63">MILLS</div><div style="position:absolute;left:0px;top:21px;white-space:pre;font-family:Inter,'Noto Sans KR',sans-serif;font-weight:700;font-size:40px;letter-spacing:1.375px;line-height:48px;color:#1c1028">19</div></div><div style="position:absolute;left:115px;top:0px;width:128px;height:69px"><div style="position:absolute;left:0px;top:0px;white-space:pre;font-family:'Cutive Mono','Noto Sans KR',monospace;font-weight:400;font-size:15px;letter-spacing:1.172px;line-height:17px;color:#6b5a63">BUILT</div><div style="position:absolute;left:0px;top:21px;white-space:pre;font-family:Inter,'Noto Sans KR',sans-serif;font-weight:700;font-size:40px;letter-spacing:0.42px;line-height:48px;color:#1c1028">c.1740</div></div><div style="position:absolute;left:307px;top:0px;width:96px;height:69px"><div style="position:absolute;left:0px;top:0px;white-space:pre;font-family:'Cutive Mono','Noto Sans KR',monospace;font-weight:400;font-size:15px;letter-spacing:1.083px;line-height:17px;color:#6b5a63">UNESCO</div><div style="position:absolute;left:0px;top:21px;white-space:pre;font-family:Inter,'Noto Sans KR',sans-serif;font-weight:700;font-size:40px;letter-spacing:1.075px;line-height:48px;color:#1c1028">1997</div></div></div><div role="img" aria-label="수로 옆 풍차와 갈대, 킨데르데이크" style="position:absolute;left:1165px;top:107px;width:598px;height:550px;background:url(img/sub/d8d0b3d9.jpg) center/cover no-repeat"></div><div style="position:absolute;left:1155px;top:97px;width:26px;height:2px;background:#e45851"></div><div style="position:absolute;left:1155px;top:97px;width:2px;height:26px;background:#e45851"></div><div style="position:absolute;left:1747px;top:97px;width:26px;height:2px;background:#e45851"></div><div style="position:absolute;left:1771px;top:97px;width:2px;height:26px;background:#e45851"></div><div style="position:absolute;left:1155px;top:665px;width:26px;height:2px;background:#e45851"></div><div style="position:absolute;left:1155px;top:641px;width:2px;height:26px;background:#e45851"></div><div style="position:absolute;left:1747px;top:665px;width:26px;height:2px;background:#e45851"></div><div style="position:absolute;left:1771px;top:641px;width:2px;height:26px;background:#e45851"></div><div style="position:absolute;left:1165px;top:672px;white-space:pre;font-family:'Cutive Mono','Noto Sans KR',monospace;font-weight:400;font-size:13px;letter-spacing:0.496px;line-height:14px;color:rgba(107,90,99,0.8)">FIG. 01 / KINDERDIJK · acediscovery · CC BY 4.0</div></div><div role="img" aria-label="푸른 운하를 따라 늘어선 풍차, 오버바르트와 네더바르트" style="position:absolute;left:40px;top:1279px;width:1220px;height:771px;background:url(img/sub/e803bdf9.jpg) center/cover no-repeat"></div><div style="position:absolute;left:30px;top:1269px;width:26px;height:2px;background:#e45851"></div><div style="position:absolute;left:30px;top:1269px;width:2px;height:26px;background:#e45851"></div><div style="position:absolute;left:1244px;top:1269px;width:26px;height:2px;background:#e45851"></div><div style="position:absolute;left:1268px;top:1269px;width:2px;height:26px;background:#e45851"></div><div style="position:absolute;left:30px;top:2058px;width:26px;height:2px;background:#e45851"></div><div style="position:absolute;left:30px;top:2034px;width:2px;height:26px;background:#e45851"></div><div style="position:absolute;left:1244px;top:2058px;width:26px;height:2px;background:#e45851"></div><div style="position:absolute;left:1268px;top:2034px;width:2px;height:26px;background:#e45851"></div><div style="position:absolute;left:160px;top:1980px;width:289px;height:18px;background:linear-gradient(#fbf7f4,#fbf7f4)"><div style="position:absolute;left:0px;top:0px;white-space:pre;font-family:'Cutive Mono','Noto Sans KR',monospace;font-weight:400;font-size:16px;letter-spacing:0.61px;line-height:18px;color:#1c1028">OVERWAARD &amp; NEDERWAARD MILLS</div></div><div style="position:absolute;left:1279px;top:1480px;width:600px;height:301px;background:linear-gradient(#fbf7f4,#fbf7f4)"><div style="position:absolute;left:36px;top:36px;white-space:pre;font-family:'Cutive Mono','Noto Sans KR',monospace;font-weight:400;font-size:18px;letter-spacing:1.045px;line-height:20px;color:#e45851">[ DESTINATION_01 ]</div><div style="position:absolute;left:36px;top:72px;white-space:pre-wrap;width:528px;font-family:Inter,'Noto Sans KR',sans-serif;font-weight:700;font-size:56px;letter-spacing:-0.72px;line-height:60px;color:#1c1028">WINDMILLS
+ON THE WATER.</div><div style="position:absolute;left:36px;top:208px;width:356px;height:57px"><div style="position:absolute;left:0px;top:0px;width:143px;height:57px"><div style="position:absolute;left:0px;top:0px;white-space:pre;font-family:'Cutive Mono','Noto Sans KR',monospace;font-weight:400;font-size:15px;letter-spacing:1.132px;line-height:17px;color:#6b5a63">FROM ROTTERDAM</div><div style="position:absolute;left:0px;top:21px;white-space:pre;font-family:Inter,'Noto Sans KR',sans-serif;font-weight:700;font-size:30px;letter-spacing:-0.941px;line-height:36px;color:#1c1028">≈ 15 km</div></div><div style="position:absolute;left:191px;top:0px;width:165px;height:57px"><div style="position:absolute;left:0px;top:0px;white-space:pre;font-family:'Cutive Mono','Noto Sans KR',monospace;font-weight:400;font-size:15px;letter-spacing:1.083px;line-height:17px;color:#6b5a63">RIVERS</div><div style="position:absolute;left:0px;top:21px;white-space:pre;font-family:Inter,'Noto Sans KR',sans-serif;font-weight:700;font-size:30px;letter-spacing:-0.139px;line-height:36px;color:#1c1028">Lek · Noord</div></div></div></div><div style="position:absolute;left:1279px;top:1480px;width:600px;height:6px;background:#e45851"></div><div style="position:absolute;left:40px;top:2267px;white-space:pre;font-family:'Cutive Mono','Noto Sans KR',monospace;font-weight:400;font-size:18px;letter-spacing:1.015px;line-height:20px;color:rgba(28,16,40,0.8)">[ 03 / 풍경 포인트 ]</div><div role="img" aria-label="물에 비친 풍차와 수련, 저녁 빛" style="position:absolute;left:350px;top:2267px;width:909px;height:570px;background:url(img/sub/bdf66c1c.jpg) center/cover no-repeat"></div><div style="position:absolute;left:340px;top:2257px;width:26px;height:2px;background:#e45851"></div><div style="position:absolute;left:340px;top:2257px;width:2px;height:26px;background:#e45851"></div><div style="position:absolute;left:1243px;top:2257px;width:26px;height:2px;background:#e45851"></div><div style="position:absolute;left:1267px;top:2257px;width:2px;height:26px;background:#e45851"></div><div style="position:absolute;left:340px;top:2845px;width:26px;height:2px;background:#e45851"></div><div style="position:absolute;left:340px;top:2821px;width:2px;height:26px;background:#e45851"></div><div style="position:absolute;left:1243px;top:2845px;width:26px;height:2px;background:#e45851"></div><div style="position:absolute;left:1267px;top:2821px;width:2px;height:26px;background:#e45851"></div><div style="position:absolute;left:1300px;top:2267px;width:560px;height:204px"><div style="position:absolute;left:0px;top:0px;white-space:pre;font-family:'Cutive Mono','Noto Sans KR',monospace;font-weight:400;font-size:18px;letter-spacing:1.053px;line-height:20px;color:#a8332c">FIG. 02 — LIGHT GUIDE</div><div style="position:absolute;left:0px;top:34px;white-space:pre-wrap;width:560px;font-family:'Noto Sans KR',sans-serif;font-weight:700;font-size:30px;letter-spacing:0.184px;line-height:42px;color:#1c1028">빛에 따라 달라지는 풍경 세 컷</div><div style="position:absolute;left:0px;top:90px;width:135px;height:114px"><div style="position:absolute;left:0px;top:0px;width:135px;height:26px"><div style="position:absolute;left:0px;top:0px;white-space:pre;font-family:'Cutive Mono','Noto Sans KR',monospace;font-weight:400;font-size:22px;letter-spacing:0.68px;line-height:24px;color:#a8332c">01</div><div style="position:absolute;left:44px;top:0px;width:91px;height:26px"><div style="position:absolute;left:0px;top:0px;white-space:pre;font-family:'Noto Sans KR',sans-serif;font-weight:700;font-size:22px;letter-spacing:-0.38px;line-height:26px;color:#1c1028">해 뜰 무렵</div></div></div><div style="position:absolute;left:0px;top:44px;width:65px;height:26px"><div style="position:absolute;left:0px;top:0px;white-space:pre;font-family:'Cutive Mono','Noto Sans KR',monospace;font-weight:400;font-size:22px;letter-spacing:0.68px;line-height:24px;color:#a8332c">02</div><div style="position:absolute;left:44px;top:0px;width:21px;height:26px"><div style="position:absolute;left:0px;top:0px;white-space:pre;font-family:'Noto Sans KR',sans-serif;font-weight:700;font-size:22px;letter-spacing:0.75px;line-height:26px;color:#1c1028">낮</div></div></div><div style="position:absolute;left:0px;top:88px;width:85px;height:26px"><div style="position:absolute;left:0px;top:0px;white-space:pre;font-family:'Cutive Mono','Noto Sans KR',monospace;font-weight:400;font-size:22px;letter-spacing:0.68px;line-height:24px;color:#a8332c">03</div><div style="position:absolute;left:44px;top:0px;width:41px;height:26px"><div style="position:absolute;left:0px;top:0px;white-space:pre;font-family:'Noto Sans KR',sans-serif;font-weight:700;font-size:22px;letter-spacing:0.26px;line-height:26px;color:#1c1028">저녁</div></div></div></div></div><div style="position:absolute;left:0px;top:2960px;width:1920px;height:1026px"><div style="position:absolute;left:90px;top:40px;white-space:pre;font-family:'Cutive Mono','Noto Sans KR',monospace;font-weight:400;font-size:18px;letter-spacing:1.389px;line-height:20px;color:rgba(28,16,40,0.6)">ROUTE · 가는 길</div><div style="position:absolute;left:90px;top:150px;width:810px;height:2px;background:rgba(28,16,40,0.85)"></div><div style="position:absolute;left:90px;top:138px;width:1.5px;height:12px;background:rgba(28,16,40,0.55)"></div><div style="position:absolute;left:117px;top:144px;width:1.5px;height:6px;background:rgba(28,16,40,0.55)"></div><div style="position:absolute;left:144px;top:144px;width:1.5px;height:6px;background:rgba(28,16,40,0.55)"></div><div style="position:absolute;left:171px;top:144px;width:1.5px;height:6px;background:rgba(28,16,40,0.55)"></div><div style="position:absolute;left:198px;top:144px;width:1.5px;height:6px;background:rgba(28,16,40,0.55)"></div><div style="position:absolute;left:225px;top:138px;width:1.5px;height:12px;background:rgba(28,16,40,0.55)"></div><div style="position:absolute;left:252px;top:144px;width:1.5px;height:6px;background:rgba(28,16,40,0.55)"></div><div style="position:absolute;left:279px;top:144px;width:1.5px;height:6px;background:rgba(28,16,40,0.55)"></div><div style="position:absolute;left:306px;top:144px;width:1.5px;height:6px;background:rgba(28,16,40,0.55)"></div><div style="position:absolute;left:333px;top:144px;width:1.5px;height:6px;background:rgba(28,16,40,0.55)"></div><div style="position:absolute;left:360px;top:138px;width:1.5px;height:12px;background:rgba(28,16,40,0.55)"></div><div style="position:absolute;left:387px;top:144px;width:1.5px;height:6px;background:rgba(28,16,40,0.55)"></div><div style="position:absolute;left:414px;top:144px;width:1.5px;height:6px;background:rgba(28,16,40,0.55)"></div><div style="position:absolute;left:441px;top:144px;width:1.5px;height:6px;background:rgba(28,16,40,0.55)"></div><div style="position:absolute;left:468px;top:144px;width:1.5px;height:6px;background:rgba(28,16,40,0.55)"></div><div style="position:absolute;left:495px;top:138px;width:1.5px;height:12px;background:rgba(28,16,40,0.55)"></div><div style="position:absolute;left:522px;top:144px;width:1.5px;height:6px;background:rgba(28,16,40,0.55)"></div><div style="position:absolute;left:549px;top:144px;width:1.5px;height:6px;background:rgba(28,16,40,0.55)"></div><div style="position:absolute;left:576px;top:144px;width:1.5px;height:6px;background:rgba(28,16,40,0.55)"></div><div style="position:absolute;left:603px;top:144px;width:1.5px;height:6px;background:rgba(28,16,40,0.55)"></div><div style="position:absolute;left:630px;top:138px;width:1.5px;height:12px;background:rgba(28,16,40,0.55)"></div><div style="position:absolute;left:657px;top:144px;width:1.5px;height:6px;background:rgba(28,16,40,0.55)"></div><div style="position:absolute;left:684px;top:144px;width:1.5px;height:6px;background:rgba(28,16,40,0.55)"></div><div style="position:absolute;left:711px;top:144px;width:1.5px;height:6px;background:rgba(28,16,40,0.55)"></div><div style="position:absolute;left:738px;top:144px;width:1.5px;height:6px;background:rgba(28,16,40,0.55)"></div><div style="position:absolute;left:765px;top:138px;width:1.5px;height:12px;background:rgba(28,16,40,0.55)"></div><div style="position:absolute;left:792px;top:144px;width:1.5px;height:6px;background:rgba(28,16,40,0.55)"></div><div style="position:absolute;left:819px;top:144px;width:1.5px;height:6px;background:rgba(28,16,40,0.55)"></div><div style="position:absolute;left:846px;top:144px;width:1.5px;height:6px;background:rgba(28,16,40,0.55)"></div><div style="position:absolute;left:873px;top:144px;width:1.5px;height:6px;background:rgba(28,16,40,0.55)"></div><div style="position:absolute;left:900px;top:138px;width:1.5px;height:12px;background:rgba(28,16,40,0.55)"></div><div style="position:absolute;left:81px;top:142px;width:18px;height:18px;border-radius:50%;box-shadow:inset 0 0 0 2px #1c1028"></div><div style="position:absolute;left:889px;top:117px;width:22px;height:27px;overflow:hidden"><svg aria-hidden="true" style="position:absolute;left:0.88px;top:0.84px;overflow:visible" width="20.25" height="25.31"><path d="M 10.1 0 C 4.6 0 0 4.4 0 9.8 C 0 16.7 10.1 25.3 10.1 25.3 C 10.1 25.3 20.3 16.7 20.3 9.8 C 20.3 4.4 15.7 0 10.1 0 Z" fill="#e45851"/></svg><svg aria-hidden="true" style="position:absolute;left:7.12px;top:6.67px;overflow:visible" width="7.76" height="7.76"><path d="M 7.8 3.9 C 7.8 6 6 7.8 3.9 7.8 C 1.7 7.8 0 6 0 3.9 C 0 1.7 1.7 0 3.9 0 C 6 0 7.8 1.7 7.8 3.9 Z" fill="#fbf7f4"/></svg></div><div style="position:absolute;left:90px;top:172px;white-space:pre;font-family:'Cutive Mono','Noto Sans KR',monospace;font-weight:400;font-size:20px;letter-spacing:1.111px;line-height:22px;color:#1c1028">ROTTERDAM</div><div style="position:absolute;left:690px;top:172px;white-space:pre-wrap;width:210px;text-align:right;font-family:'Cutive Mono','Noto Sans KR',monospace;font-weight:400;font-size:20px;letter-spacing:1.163px;color:#1c1028">KINDERDIJK</div><div style="position:absolute;left:90px;top:102px;white-space:pre-wrap;width:810px;text-align:center;font-family:'Cutive Mono','Noto Sans KR',monospace;font-weight:400;font-size:22px;letter-spacing:1.279px;color:#a8332c">≈ 15 km</div><div style="position:absolute;left:90px;top:240px;white-space:pre-wrap;width:800px;font-family:'Noto Sans KR',sans-serif;font-weight:400;font-size:22px;line-height:36px;color:rgba(28,16,40,0.88)">수상버스 · 버스 · 자전거로 갈 수 있어요.</div><div style="position:absolute;left:38px;top:685px;white-space:pre;font-family:Inter,'Noto Sans KR',sans-serif;font-weight:800;font-size:120px;letter-spacing:-4.566px;line-height:145px;color:#1c1028">WALK.</div><div style="position:absolute;left:42px;top:833px;white-space:pre;font-family:Inter,'Noto Sans KR',sans-serif;font-weight:800;font-size:72px;letter-spacing:-1.663px;line-height:87px;color:rgba(28,16,40,0.78)">RIDE.</div><div style="position:absolute;left:42px;top:937px;white-space:pre;font-family:'Cutive Mono','Noto Sans KR',monospace;font-weight:400;font-size:40px;letter-spacing:0.726px;line-height:44px;color:rgba(28,16,40,0.6)">LOOK.</div><div style="position:absolute;left:42px;top:1025px;width:1840px;height:1px;background:rgba(28,16,40,0.2)"></div></div><div role="img" aria-label="해 뜰 무렵 호수에 비친 풍차" style="position:absolute;left:971px;top:2883px;width:906px;height:567px;background:url(img/sub/ce1acf59.jpg) center/cover no-repeat"></div><div style="position:absolute;left:961px;top:2873px;width:26px;height:2px;background:#e45851"></div><div style="position:absolute;left:961px;top:2873px;width:2px;height:26px;background:#e45851"></div><div style="position:absolute;left:1861px;top:2873px;width:26px;height:2px;background:#e45851"></div><div style="position:absolute;left:1885px;top:2873px;width:2px;height:26px;background:#e45851"></div><div style="position:absolute;left:961px;top:3458px;width:26px;height:2px;background:#e45851"></div><div style="position:absolute;left:961px;top:3434px;width:2px;height:26px;background:#e45851"></div><div style="position:absolute;left:1861px;top:3458px;width:26px;height:2px;background:#e45851"></div><div style="position:absolute;left:1885px;top:3434px;width:2px;height:26px;background:#e45851"></div><div style="position:absolute;left:0px;top:3986px;width:1920px;height:553px;background:linear-gradient(#edd9cf,#edd9cf)"><div style="position:absolute;left:0px;top:0px;width:1920px;height:1px;background:rgba(28,16,40,0.15)"></div><div role="img" aria-label="킨데르데이크의 풍차" style="position:absolute;left:40px;top:51px;width:579px;height:471px;background:url(img/sub/628a0398.jpg) center/cover no-repeat"></div><div style="position:absolute;left:40px;top:51px;width:639px;height:511px"><div style="position:absolute;left:0px;top:0px;width:579px;height:471px"><div aria-hidden="true" style="position:absolute;left:0;top:0;width:100%;height:100%;-webkit-mask-image:linear-gradient(180deg,rgba(0,0,0,0) 0%,rgba(0,0,0,0) 42%,#000000 78%,#000000 100%);mask-image:linear-gradient(180deg,rgba(0,0,0,0) 0%,rgba(0,0,0,0) 42%,#000000 78%,#000000 100%);-webkit-mask-size:579px 471px;mask-size:579px 471px;-webkit-mask-position:0px 0px;mask-position:0px 0px;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat"><div aria-hidden="true" style="position:absolute;left:0px;top:0px;width:579px;height:471px;background:url(img/sub/5f43e228.jpg) center/cover no-repeat"></div></div></div><div style="position:absolute;left:26px;top:188px;width:579px;height:10px;overflow:hidden"><div aria-hidden="true" style="position:absolute;left:0px;top:-188px;width:579px;height:471px;background:url(img/sub/5f43e228.jpg) center/cover no-repeat"></div></div><div style="position:absolute;left:-18px;top:221px;width:579px;height:18px;overflow:hidden"><div aria-hidden="true" style="position:absolute;left:0px;top:-221px;width:579px;height:471px;background:url(img/sub/628a0398.jpg) center/cover no-repeat"></div></div><div style="position:absolute;left:40px;top:276px;width:579px;height:6px;overflow:hidden"><div aria-hidden="true" style="position:absolute;left:0px;top:-276px;width:579px;height:471px;background:url(img/sub/5f43e228.jpg) center/cover no-repeat"></div></div><div style="position:absolute;left:14px;top:309px;width:579px;height:24px;overflow:hidden"><div aria-hidden="true" style="position:absolute;left:0px;top:-309px;width:579px;height:471px;background:url(img/sub/5f43e228.jpg) center/cover no-repeat"></div></div><div style="position:absolute;left:-30px;top:356px;width:579px;height:8px;overflow:hidden"><div aria-hidden="true" style="position:absolute;left:0px;top:-356px;width:579px;height:471px;background:url(img/sub/628a0398.jpg) center/cover no-repeat"></div></div><div style="position:absolute;left:22px;top:389px;width:579px;height:14px;overflow:hidden"><div aria-hidden="true" style="position:absolute;left:0px;top:-389px;width:579px;height:471px;background:url(img/sub/5f43e228.jpg) center/cover no-repeat"></div></div><div style="position:absolute;left:-12px;top:424px;width:579px;height:12px;overflow:hidden"><div aria-hidden="true" style="position:absolute;left:0px;top:-424px;width:579px;height:471px;background:url(img/sub/5f43e228.jpg) center/cover no-repeat"></div></div><div style="position:absolute;left:-18px;top:219px;width:579px;height:2px;background:rgba(228,88,81,0.85)"></div><div style="position:absolute;left:14px;top:307px;width:579px;height:2px;background:rgba(143,187,230,0.85)"></div><div style="position:absolute;left:22px;top:387px;width:579px;height:2px;background:rgba(198,253,84,0.85)"></div><div style="position:absolute;left:69px;top:245px;width:12px;height:12px;background:#c6fd54"></div><div style="position:absolute;left:116px;top:259px;width:8px;height:8px;background:#c6fd54"></div><div style="position:absolute;left:191px;top:287px;width:14px;height:14px;background:#fbf7f4"></div><div style="position:absolute;left:290px;top:325px;width:10px;height:10px;background:#8fbbe6"></div><div style="position:absolute;left:353px;top:339px;width:16px;height:16px;background:#fbf7f4"></div><div style="position:absolute;left:417px;top:301px;width:8px;height:8px;background:#e45851"></div><div style="position:absolute;left:498px;top:367px;width:12px;height:12px;background:#c6fd54"></div><div style="position:absolute;left:544px;top:405px;width:10px;height:10px;background:#8fbbe6"></div><div style="position:absolute;left:591px;top:330px;width:12px;height:12px;background:#c6fd54"></div><div style="position:absolute;left:608px;top:424px;width:8px;height:8px;background:#fbf7f4"></div><div style="position:absolute;left:232px;top:438px;width:14px;height:14px;background:#c6fd54"></div><div style="position:absolute;left:41px;top:414px;width:10px;height:10px;background:#8fbbe6"></div><div style="position:absolute;left:567px;top:273px;width:6px;height:6px;background:#e45851"></div><div style="position:absolute;left:620px;top:377px;width:10px;height:10px;background:#8fbbe6"></div><svg aria-hidden="true" style="position:absolute;left:0px;top:236px;overflow:visible" width="579" height="232"><path d="M 0 232 L 579 232" fill="none" stroke="#1c1028" stroke-opacity="0.12" stroke-width="1"/><path d="M 0 0 L 579 0 M 0 4 L 579 4 M 0 8 L 579 8 M 0 12 L 579 12 M 0 16 L 579 16 M 0 20 L 579 20 M 0 24 L 579 24 M 0 28 L 579 28 M 0 32 L 579 32 M 0 36 L 579 36 M 0 40 L 579 40 M 0 44 L 579 44 M 0 48 L 579 48 M 0 52 L 579 52 M 0 56 L 579 56 M 0 60 L 579 60 M 0 64 L 579 64 M 0 68 L 579 68 M 0 72 L 579 72 M 0 76 L 579 76 M 0 80 L 579 80 M 0 84 L 579 84 M 0 88 L 579 88 M 0 92 L 579 92 M 0 96 L 579 96 M 0 100 L 579 100 M 0 104 L 579 104 M 0 108 L 579 108 M 0 112 L 579 112 M 0 116 L 579 116 M 0 120 L 579 120 M 0 124 L 579 124 M 0 128 L 579 128 M 0 132 L 579 132 M 0 136 L 579 136 M 0 140 L 579 140 M 0 144 L 579 144 M 0 148 L 579 148 M 0 152 L 579 152 M 0 156 L 579 156 M 0 160 L 579 160 M 0 164 L 579 164 M 0 168 L 579 168 M 0 172 L 579 172 M 0 176 L 579 176 M 0 180 L 579 180 M 0 184 L 579 184 M 0 188 L 579 188 M 0 192 L 579 192 M 0 196 L 579 196 M 0 200 L 579 200 M 0 204 L 579 204 M 0 208 L 579 208 M 0 212 L 579 212 M 0 216 L 579 216 M 0 220 L 579 220 M 0 224 L 579 224 M 0 228 L 579 228" fill="none" stroke="#1c1028" stroke-opacity="0.12" stroke-width="1"/></svg><div style="position:absolute;left:0px;top:367px;width:579px;height:104px;background:linear-gradient(180deg,rgba(29,33,43,0) 0%,rgba(29,33,43,0.55) 100%)"></div><button class="act chipb" type="button" data-act="peel" aria-label="과학과 역사, 스티커 아래 보기" style="position:absolute;left:435px;top:450px;width:178px;height:35px;background:linear-gradient(#1d212b,#1d212b);text-align:left"><div style="position:absolute;left:12px;top:8px;white-space:pre;font-family:'Courier Prime','Noto Sans KR',monospace;font-weight:700;font-size:17px;letter-spacing:0.052px;line-height:19px;color:rgba(228,88,81,0.8)">[ 과학과 역사 → ]</div><div style="position:absolute;left:16px;top:8px;white-space:pre;font-family:'Courier Prime','Noto Sans KR',monospace;font-weight:700;font-size:17px;letter-spacing:0.052px;line-height:19px;color:rgba(143,187,230,0.8)">[ 과학과 역사 → ]</div><div style="position:absolute;left:14px;top:8px;white-space:pre;font-family:'Courier Prime','Noto Sans KR',monospace;font-weight:700;font-size:17px;letter-spacing:0.052px;line-height:19px;color:#c6fd54">[ 과학과 역사 → ]</div></button></div><div style="position:absolute;left:30px;top:41px;width:26px;height:2px;background:#e45851"></div><div style="position:absolute;left:30px;top:41px;width:2px;height:26px;background:#e45851"></div><div style="position:absolute;left:603px;top:41px;width:26px;height:2px;background:#e45851"></div><div style="position:absolute;left:627px;top:41px;width:2px;height:26px;background:#e45851"></div><div style="position:absolute;left:30px;top:530px;width:26px;height:2px;background:#e45851"></div><div style="position:absolute;left:30px;top:506px;width:2px;height:26px;background:#e45851"></div><div style="position:absolute;left:603px;top:530px;width:26px;height:2px;background:#e45851"></div><div style="position:absolute;left:627px;top:506px;width:2px;height:26px;background:#e45851"></div><div style="position:absolute;left:40px;top:534px;white-space:pre;font-family:'Cutive Mono','Noto Sans KR',monospace;font-weight:400;font-size:12px;letter-spacing:0.458px;line-height:13px;color:rgba(28,16,40,0.85)">KINDERDIJK · acediscovery · CC BY 4.0</div><div style="position:absolute;left:661px;top:71px;width:600px;height:110px"><h2 style="position:absolute;left:0px;top:0px;white-space:pre-wrap;width:600px;font-family:Inter,'Noto Sans KR',sans-serif;font-weight:700;font-size:30px;letter-spacing:0.214px;color:#1c1028">NEXT STOPS</h2><div style="position:absolute;left:0px;top:48px;white-space:pre;font-family:'Cutive Mono','Noto Sans KR',monospace;font-weight:400;font-size:16px;letter-spacing:0.896px;line-height:18px;color:#a8332c">[ 다음 여행지 ]</div><div style="position:absolute;left:0px;top:78px;white-space:pre-wrap;width:600px;font-family:'Noto Sans KR',sans-serif;font-weight:400;font-size:20px;line-height:32px;color:rgba(28,16,40,0.85)">킨데르데이크 다음, 가까운 간척지로 이어 가 보세요.</div></div><div style="position:absolute;left:1279px;top:71px;width:600px;height:285px"><h2 style="position:absolute;left:0px;top:0px;white-space:pre-wrap;width:600px;font-family:Inter,'Noto Sans KR',sans-serif;font-weight:700;font-size:30px;letter-spacing:0.214px;color:#1c1028">PHOTO CREDITS</h2><div style="position:absolute;left:0px;top:48px;white-space:pre;font-family:'Cutive Mono','Noto Sans KR',monospace;font-weight:400;font-size:16px;letter-spacing:0.852px;line-height:18px;color:#a8332c">[ 사진 출처 ]</div><div style="position:absolute;left:0px;top:78px;white-space:pre-wrap;width:600px;font-family:'Cutive Mono','Noto Sans KR',monospace;font-weight:400;font-size:13px;letter-spacing:0.236px;line-height:23px;color:rgba(28,16,40,0.85)">Windmills beside the blue canal — Michielverbeek · CC BY-SA 4.0
+Windmill reflections — Tarod · CC BY-SA 3.0 nl
+Windmill above vegetation — acediscovery · CC BY 4.0
+Kinderdijk Windmill 1 — acediscovery · CC BY 4.0
+Overwaard Mill No. 4 at sunrise — D. Balkhovitin · CC BY-SA 4.0
+Bovenmolen G, Schermerhorn — Michielverbeek · CC BY 4.0
+Bulb fields, Beemster — Henk Monster · CC BY 3.0
+Cruquius — Caspar · CC BY-SA 2.5
+via Wikimedia Commons · cropped &amp; colour-edited</div></div><button class="act" type="button" data-act="map" aria-label="지도에서 다음 여행지 고르기" style="position:absolute;left:661px;top:409px;width:229px;height:80px;overflow:hidden;background:linear-gradient(#fbf7f4,#fbf7f4);text-align:left"><div aria-hidden="true" style="position:absolute;left:12px;top:12px;width:56px;height:56px;background:url(img/sub/42c873f9.jpg) center/cover no-repeat"></div><div style="position:absolute;left:78px;top:20px;width:74px;height:40px"><div style="position:absolute;left:0px;top:0px;white-space:pre;font-family:'Noto Sans KR',sans-serif;font-weight:700;font-size:20px;letter-spacing:0.123px;line-height:24px;color:#1c1028">베임스터</div><div style="position:absolute;left:0px;top:26px;white-space:pre;font-family:'Cutive Mono','Noto Sans KR',monospace;font-weight:400;font-size:13px;letter-spacing:0.756px;line-height:14px;color:#6b5a63">BEEMSTER</div></div></button><button class="act" type="button" data-act="map" aria-label="지도에서 다음 여행지 고르기" style="position:absolute;left:904px;top:409px;width:229px;height:80px;overflow:hidden;background:linear-gradient(#fbf7f4,#fbf7f4);text-align:left"><div aria-hidden="true" style="position:absolute;left:12px;top:12px;width:56px;height:56px;background:url(img/sub/61ad9a82.jpg) center/cover no-repeat"></div><div style="position:absolute;left:78px;top:20px;width:129px;height:40px"><div style="position:absolute;left:0px;top:0px;white-space:pre;font-family:'Noto Sans KR',sans-serif;font-weight:700;font-size:20px;letter-spacing:0.123px;line-height:24px;color:#1c1028">스헤르메르호른</div><div style="position:absolute;left:0px;top:26px;white-space:pre;font-family:'Cutive Mono','Noto Sans KR',monospace;font-weight:400;font-size:13px;letter-spacing:0.756px;line-height:14px;color:#6b5a63">SCHERMERHORN</div></div></button><button class="act" type="button" data-act="map" aria-label="지도에서 다음 여행지 고르기" style="position:absolute;left:1147px;top:409px;width:229px;height:80px;overflow:hidden;background:linear-gradient(#fbf7f4,#fbf7f4);text-align:left"><div aria-hidden="true" style="position:absolute;left:12px;top:12px;width:56px;height:56px;background:url(img/sub/7f94d40d.jpg) center/cover no-repeat"></div><div style="position:absolute;left:78px;top:20px;width:92px;height:40px"><div style="position:absolute;left:0px;top:0px;white-space:pre;font-family:'Noto Sans KR',sans-serif;font-weight:700;font-size:20px;letter-spacing:0.123px;line-height:24px;color:#1c1028">크루키우스</div><div style="position:absolute;left:0px;top:26px;white-space:pre;font-family:'Cutive Mono','Noto Sans KR',monospace;font-weight:400;font-size:13px;letter-spacing:0.756px;line-height:14px;color:#6b5a63">CRUQUIUS</div></div></button><button class="act" type="button" data-act="peel" aria-label="다크 페이지로 넘어가기" style="position:absolute;left:1390px;top:409px;width:229px;height:80px;overflow:hidden;background:linear-gradient(#fbf7f4,#fbf7f4);text-align:left"><div aria-hidden="true" style="position:absolute;left:12px;top:12px;width:56px;height:56px;background:url(img/sub/a0a935db.jpg) center/cover no-repeat"></div><div style="position:absolute;left:78px;top:20px;width:147px;height:40px"><div style="position:absolute;left:0px;top:0px;white-space:pre;font-family:'Noto Sans KR',sans-serif;font-weight:700;font-size:20px;letter-spacing:-0.102px;line-height:24px;color:#1c1028">과학과 역사</div><div style="position:absolute;left:0px;top:26px;white-space:pre;font-family:'Cutive Mono','Noto Sans KR',monospace;font-weight:400;font-size:13px;letter-spacing:0.756px;line-height:14px;color:#6b5a63">SCIENCE × HISTORY</div></div></button></div><div style="position:absolute;left:0px;top:4539px;width:1920px;height:101px;background:linear-gradient(#fbf7f4,#fbf7f4)"><div style="position:absolute;left:0px;top:0px;width:1920px;height:1px;background:rgba(28,16,40,0.15)"></div><div style="position:absolute;left:40px;top:30px;width:112px;height:34px;overflow:hidden"><div style="position:absolute;left:0px;top:3.5px;width:22px;height:27px;overflow:hidden"><svg aria-hidden="true" style="position:absolute;left:0.88px;top:0.84px;overflow:visible" width="20.25" height="25.31"><path d="M 10.1 0 C 4.6 0 0 4.4 0 9.8 C 0 16.7 10.1 25.3 10.1 25.3 C 10.1 25.3 20.3 16.7 20.3 9.8 C 20.3 4.4 15.7 0 10.1 0 Z" fill="#e45851"/></svg><svg aria-hidden="true" style="position:absolute;left:7.12px;top:6.67px;overflow:visible" width="7.76" height="7.76"><path d="M 7.8 3.9 C 7.8 6 6 7.8 3.9 7.8 C 1.7 7.8 0 6 0 3.9 C 0 1.7 1.7 0 3.9 0 C 6 0 7.8 1.7 7.8 3.9 Z" fill="#fbf7f4"/></svg></div><div style="position:absolute;left:32px;top:0px;white-space:pre;font-family:Inter,'Noto Sans KR',sans-serif;font-weight:800;font-size:28px;letter-spacing:-0.647px;line-height:34px;color:#1c1028">PINed</div></div><div style="position:absolute;left:300px;top:40px;white-space:pre;font-family:'Cutive Mono','Noto Sans KR',monospace;font-weight:400;font-size:15px;letter-spacing:0.886px;line-height:17px;color:rgba(28,16,40,0.72)">THE NETHERLANDS · SCENERY × SCIENCE</div><button class="tb" type="button" data-act="map" style="position:absolute;left:1640px;top:38px;white-space:pre;font-family:'Cutive Mono','Noto Sans KR',monospace;font-weight:400;font-size:18px;letter-spacing:0.686px;line-height:20px;color:#1c1028">[ 지도 ]</button><button class="tb" type="button" data-act="map" style="position:absolute;left:1760px;top:38px;white-space:pre;font-family:'Cutive Mono','Noto Sans KR',monospace;font-weight:400;font-size:18px;letter-spacing:0.686px;line-height:20px;color:#a8332c">[ NEXT → ]</button></div><div style="position:absolute;left:1300px;top:2628px;width:560px;height:214px"><div style="position:absolute;left:0px;top:0px;white-space:pre;font-family:'Cutive Mono','Noto Sans KR',monospace;font-weight:400;font-size:14px;letter-spacing:0.814px;line-height:15px;color:rgba(28,16,40,0.6)">PHOTOS SHOT AT · 촬영 시각</div><div style="position:absolute;left:0px;top:186px;width:560px;height:1.5px;background:rgba(28,16,40,0.45)"></div><svg aria-hidden="true" style="position:absolute;left:40px;top:68px;overflow:visible" width="480" height="236"><path d="M 0 118 A 240 118 0 0 1 480 118" fill="none" stroke="#1c1028" stroke-opacity="0.55" stroke-width="1.5" stroke-dasharray="6 6"/></svg><div style="position:absolute;left:36.72px;top:137.13px;width:28px;height:28px;background:linear-gradient(#e45851,#e45851);border-radius:14px;box-shadow:inset 0 0 0 2px #fbf7f4"><div style="position:absolute;left:6px;top:7px;white-space:pre;font-family:'Cutive Mono','Noto Sans KR',monospace;font-weight:400;font-size:13px;letter-spacing:-0.024px;line-height:14px;color:#fbf7f4">01</div></div><div style="position:absolute;left:0px;top:196px;white-space:pre;font-family:'Cutive Mono','Noto Sans KR',monospace;font-weight:400;font-size:15px;letter-spacing:0.572px;line-height:17px;color:#1c1028">07:50 · APR</div><div style="position:absolute;left:266px;top:54px;width:28px;height:28px;background:linear-gradient(#e45851,#e45851);border-radius:14px;box-shadow:inset 0 0 0 2px #fbf7f4"><div style="position:absolute;left:6px;top:7px;white-space:pre;font-family:'Cutive Mono','Noto Sans KR',monospace;font-weight:400;font-size:13px;letter-spacing:-0.024px;line-height:14px;color:#fbf7f4">02</div></div><div style="position:absolute;left:230px;top:29px;white-space:pre;font-family:'Cutive Mono','Noto Sans KR',monospace;font-weight:400;font-size:15px;letter-spacing:0.572px;line-height:17px;color:#1c1028">11:20 · JUN</div><div style="position:absolute;left:461.33px;top:103.44px;width:28px;height:28px;background:linear-gradient(#e45851,#e45851);border-radius:14px;box-shadow:inset 0 0 0 2px #fbf7f4"><div style="position:absolute;left:6px;top:7px;white-space:pre;font-family:'Cutive Mono','Noto Sans KR',monospace;font-weight:400;font-size:13px;letter-spacing:-0.024px;line-height:14px;color:#fbf7f4">03</div></div><div style="position:absolute;left:461px;top:196px;white-space:pre;font-family:'Cutive Mono','Noto Sans KR',monospace;font-weight:400;font-size:15px;letter-spacing:0.572px;line-height:17px;color:#1c1028">18:18 · AUG</div></div><div style="position:absolute;left:40px;top:2068px;width:456px;height:26px"><div style="position:absolute;left:0px;top:0px;width:26px;height:26px;background:linear-gradient(#e45851,#e45851)"><div style="position:absolute;left:5px;top:6px;white-space:pre;font-family:'Cutive Mono','Noto Sans KR',monospace;font-weight:400;font-size:13px;letter-spacing:-0.024px;line-height:14px;color:#fbf7f4">02</div></div><div style="position:absolute;left:36px;top:3px;white-space:pre;font-family:'Noto Sans KR',sans-serif;font-weight:700;font-size:17px;letter-spacing:0.104px;line-height:20px;color:#1c1028">낮</div><div style="position:absolute;left:62px;top:4.5px;white-space:pre;font-family:'Cutive Mono','Noto Sans KR',monospace;font-weight:400;font-size:15px;letter-spacing:0.572px;line-height:17px;color:#1c1028">11:20 · JUN</div><div style="position:absolute;left:171px;top:6px;width:1px;height:14px;background:rgba(28,16,40,0.3)"></div><div style="position:absolute;left:182px;top:6.5px;white-space:pre;font-family:'Cutive Mono','Noto Sans KR',monospace;font-weight:400;font-size:12px;letter-spacing:0.458px;line-height:13px;color:rgba(28,16,40,0.85)">PHOTO · Michielverbeek · CC BY-SA 4.0</div></div><div style="position:absolute;left:350px;top:2856px;width:426px;height:26px"><div style="position:absolute;left:0px;top:0px;width:26px;height:26px;background:linear-gradient(#e45851,#e45851)"><div style="position:absolute;left:5px;top:6px;white-space:pre;font-family:'Cutive Mono','Noto Sans KR',monospace;font-weight:400;font-size:13px;letter-spacing:-0.024px;line-height:14px;color:#fbf7f4">03</div></div><div style="position:absolute;left:36px;top:3px;white-space:pre;font-family:'Noto Sans KR',sans-serif;font-weight:700;font-size:17px;letter-spacing:0.36px;line-height:20px;color:#1c1028">저녁</div><div style="position:absolute;left:78px;top:4.5px;white-space:pre;font-family:'Cutive Mono','Noto Sans KR',monospace;font-weight:400;font-size:15px;letter-spacing:0.572px;line-height:17px;color:#1c1028">18:18 · AUG</div><div style="position:absolute;left:187px;top:6px;width:1px;height:14px;background:rgba(28,16,40,0.3)"></div><div style="position:absolute;left:198px;top:6.5px;white-space:pre;font-family:'Cutive Mono','Noto Sans KR',monospace;font-weight:400;font-size:12px;letter-spacing:0.495px;line-height:13px;color:rgba(28,16,40,0.85)">PHOTO · Tarod · CC BY-SA 3.0 nl</div></div><div style="position:absolute;left:971px;top:3470px;width:542px;height:26px"><div style="position:absolute;left:0px;top:0px;width:26px;height:26px;background:linear-gradient(#e45851,#e45851)"><div style="position:absolute;left:5px;top:6px;white-space:pre;font-family:'Cutive Mono','Noto Sans KR',monospace;font-weight:400;font-size:13px;letter-spacing:-0.024px;line-height:14px;color:#fbf7f4">01</div></div><div style="position:absolute;left:36px;top:3px;white-space:pre;font-family:'Noto Sans KR',sans-serif;font-weight:700;font-size:17px;letter-spacing:-0.182px;line-height:20px;color:#1c1028">해 뜰 무렵</div><div style="position:absolute;left:117px;top:4.5px;white-space:pre;font-family:'Cutive Mono','Noto Sans KR',monospace;font-weight:400;font-size:15px;letter-spacing:0.572px;line-height:17px;color:#1c1028">07:50 · APR</div><div style="position:absolute;left:226px;top:6px;width:1px;height:14px;background:rgba(28,16,40,0.3)"></div><div style="position:absolute;left:237px;top:6.5px;white-space:pre;font-family:'Cutive Mono','Noto Sans KR',monospace;font-weight:400;font-size:12px;letter-spacing:0.458px;line-height:13px;color:rgba(28,16,40,0.85)">PHOTO · Dmytro Balkhovitin · CC BY-SA 4.0</div></div></main>
+<header class="nav" id="navL"><button type="button" class="up" data-act="top" aria-label="맨 위로"><span class="b1"></span><span class="caret">^</span><span class="b2"></span></button><div class="wm"><img src="img/logo-l.png" alt="PINed"></div><nav class="links" style="right:226px" aria-label="페이지 이동"><button type="button" class="ln" data-act="y:1279" data-y="1279"><span class="b1"></span> 여행지 <span class="b2"></span></button><button type="button" class="ln" data-act="map"><span class="b1"></span> 지도 <span class="b2"></span></button><button type="button" class="ln" data-act="y:2267" data-y="2267"><span class="b1"></span> 이야기 <span class="b2"></span></button><button type="button" class="ln" data-act="y:2960" data-y="2960"><span class="b1"></span> 여행 준비 <span class="b2"></span></button></nav></header>
+<canvas id="cipher" aria-hidden="true"></canvas>
+<div id="flapw" aria-hidden="true"><div id="flap"></div></div>
+<button type="button" id="corner" aria-label="스티커 아래 보기, 다크 페이지로"></button>
+<script src="flow.js"></script>
+<script>(function () {
+  'use strict';
+  const W = 1920;
+
+  const qs = new URLSearchParams(location.search), CAP = qs.has('cap');
+  if (CAP) document.body.classList.add('cap');
+  const REDUCE = !CAP && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const doc = document, body = doc.body;
+  const $ = (s, r = doc) => r.querySelector(s), $$ = (s, r = doc) => Array.from(r.querySelectorAll(s));
+  const clamp = (v, a, b) => (v < a ? a : v > b ? b : v), lerp = (a, b, t) => a + (b - a) * t;
+  const sstep = (e0, e1, x) => { const t = clamp((x - e0) / (e1 - e0), 0, 1); return t * t * (3 - 2 * t); };
+  const easeOut = k => 1 - Math.pow(1 - k, 4);
+  const easeInOut = k => (k < .5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2);
+  let VH = innerHeight;
+  const smooth = y => scrollTo({ top: y, behavior: REDUCE ? 'auto' : 'smooth' });
+  // brackets become parentheses on hover, as everywhere on the site
+  $$('.tb').forEach(el => {
+    const t = el.textContent, h = t.replace('[', '(').replace(/\](?!.*\])/, ')');
+    const set = on => { el.textContent = on ? h : t; };
+    el.addEventListener('pointerenter', () => set(true)); el.addEventListener('pointerleave', () => set(false));
+    el.addEventListener('focus', () => set(true)); el.addEventListener('blur', () => set(false));
+  });
+  // which nav word is current
+  const navLinks = $$('.nav .ln[data-y]');
+  function spy() {
+    const y = scrollY + 420; let on = null;
+    navLinks.forEach(b => { if (y >= +b.dataset.y) on = b; });
+    navLinks.forEach(b => b.classList.toggle('on', b === on));
+  }
+  addEventListener('scroll', spy, { passive: true }); spy();
+
+  const C = { TOTAL: 4640, MAXS: 4640 - 1080, PIN1: -100000 };
+  const light = $('#page'), navL = $('#navL');
+  const cipher = $('#cipher'), cctx = cipher.getContext('2d');
+  const flap = $('#flap'), corner = $('#corner');
+  const GL = '0123456789!<>-_\\/[]{}—=+*^?#$%&'.split('');
+  let theme = 'L';
+  // ------------------------------------------------------------ geometry helpers
+  function clipPoly(poly, c, keepLight) {
+    const inside = p => (keepLight ? p[0] - p[1] <= c : p[0] - p[1] >= c);
+    const out = [];
+    for (let i = 0; i < poly.length; i++) {
+      const a = poly[i], b = poly[(i + 1) % poly.length], ia = inside(a), ib = inside(b);
+      if (ia) out.push(a);
+      if (ia !== ib) { const fa = a[0] - a[1] - c, fb = b[0] - b[1] - c, t = fa / (fa - fb); out.push([a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t]); }
+    }
+    return out;
+  }
+  const polyCss = pts => (pts.length < 3 ? 'polygon(0 0,0 0,0 0)' : 'polygon(' + pts.map(p => p[0].toFixed(1) + 'px ' + p[1].toFixed(1) + 'px').join(',') + ')');
+  const rectV = () => [[0, 0], [W, 0], [W, VH], [0, VH]];
+  const TOT = () => W + VH;
+
+  // ------------------------------------------------------------ cipher: what the sticker hides, before it is decoded
+  const CW = 16, CH = 26;
+  const STREAM = 'NAP+0.00 NAP-6.76 26%<NAP SUM(Q_in)-SUM(Q_out)=0 P=ρ·g·Q·H/η Cp≤16/27 h=-3.45 h=-3.50 1612 1635 1740 1852 1932 1942 1968 0110 1001 0101 1100 ≈ √ π × + = ^ [ ] { } < > '.split('');
+  const BAND = '   ∑Q_in − ∑Q_out = 0   ·   P = ρ g Q H / η   ·   NAP 0.00 m   ·   26% < NAP   ·   −6.76 m   ·   Cp ≤ 16/27   ·';
+  const B8 = [0, 32, 8, 40, 2, 34, 10, 42, 48, 16, 56, 24, 50, 18, 58, 26, 12, 44, 4, 36, 14, 46, 6, 38, 60, 28, 52, 20, 62, 30, 54, 22,
+    3, 35, 11, 43, 1, 33, 9, 41, 51, 19, 59, 27, 49, 17, 57, 25, 15, 47, 7, 39, 13, 45, 5, 37, 63, 31, 55, 23, 61, 29, 53, 21].map(v => (v + .5) / 64);
+  let cols = 0, rows = 0, DPR = 1, atlas = null, cellCh = [];
+  const atlasIdx = new Map();
+  function initCipher() {
+    DPR = Math.min(2, devicePixelRatio || 1);
+    cipher.width = W * DPR; cipher.height = VH * DPR;
+    cipher.style.width = W + 'px'; cipher.style.height = VH + 'px';
+    cols = Math.ceil(W / CW); rows = Math.ceil(VH / CH);
+    cellCh = new Array(cols * rows);
+    for (let r = 0; r < rows; r++) {
+      const off = (r * 37 + (r % 3) * 11) % STREAM.length;
+      for (let c = 0; c < cols; c++) cellCh[r * cols + c] = STREAM[(off + c) % STREAM.length];
+    }
+    const chars = Array.from(new Set(STREAM.concat(GL))).filter(c => c !== ' ');
+    atlas = doc.createElement('canvas'); atlas.width = chars.length * CW * DPR; atlas.height = CH * DPR;
+    const a = atlas.getContext('2d'); a.scale(DPR, DPR);
+    a.fillStyle = '#c6fd54'; a.font = '15px "Courier Prime", monospace'; a.textBaseline = 'middle'; a.textAlign = 'center';
+    atlasIdx.clear();
+    chars.forEach((ch, i) => { a.fillText(ch, i * CW + CW / 2, CH / 2 + 1); atlasIdx.set(ch, i); });
+  }
+  let flick = 0;
+  function drawCipher(S, d) {
+    const ctx = cctx;
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    ctx.clearRect(0, 0, W, VH);
+    const c = W - S;
+    const yMax = Math.min(VH, S + CH);
+    const r1 = Math.min(rows - 1, Math.ceil(yMax / CH));
+    ctx.fillStyle = '#1d212b';
+    for (let r = 0; r <= r1; r++) {
+      const y0 = r * CH, cy = y0 + CH / 2;
+      const c0 = Math.max(0, Math.floor((c + cy - (CW + CH) / 2) / CW));
+      for (let col = c0; col < cols; col++) {
+        const x0 = col * CW, cxm = x0 + CW / 2;
+        const g = clamp((cxm - cy - c) / Math.max(S, 1), 0, 1);
+        const rv = .55 * B8[(r & 7) * 8 + (col & 7)] + .45 * (1 - g);
+        if (rv < d) continue;                        // decoded: the science shows through
+        ctx.globalAlpha = 1; ctx.fillRect(x0, y0, CW, CH);
+        let ch = cellCh[r * cols + col];
+        const gap = rv - d;
+        if (gap < .16 && (col * 7 + r * 13 + flick) % 5 === 0) ch = GL[(col * 31 + r * 17 + flick * 7) % GL.length];
+        if (ch === ' ') continue;
+        const i = atlasIdx.get(ch); if (i === undefined) continue;
+        ctx.globalAlpha = .32 + .68 * clamp(1 - gap / .32, 0, 1);
+        ctx.drawImage(atlas, i * CW * DPR, 0, CW * DPR, CH * DPR, x0, y0, CW, CH);
+      }
+    }
+    // the torn edge carries formulas, set in one line along the fold
+    ctx.globalAlpha = 1;
+    ctx.save(); ctx.translate(c, 0); ctx.rotate(Math.PI / 4);
+    const L = (S + VH) * 1.5;
+    ctx.fillStyle = '#1d212b'; ctx.fillRect(0, -22, L, 22);
+    ctx.fillStyle = '#c6fd54'; ctx.font = '13px "Courier Prime", monospace'; ctx.textBaseline = 'alphabetic';
+    let s = ''; while (s.length * 7.8 < L) s += BAND;
+    ctx.fillText(s, 6, -7);
+    ctx.restore();
+  }
+
+  // ------------------------------------------------------------ the sticker corner
+  let S = 108, Sdraw = -1, dDraw = -1, fDraw = -1, peelMode = false, mode = 'rest', anim = null, hover = false;
+  const breath0 = performance.now();
+  function setPeel(on) {
+    if (on === peelMode) return;
+    peelMode = on; body.classList.toggle('peel', on);
+    if (!on) { light.style.clipPath = ''; navL.style.clipPath = ''; }
+    Sdraw = -1;
+  }
+  function setLightClip(s) {
+    const c = W - s, sy = scrollY;
+    if (s <= Math.min(W, VH)) light.style.clipPath = `polygon(0 0,${W}px 0,${W}px ${sy}px,${c}px ${sy}px,${W}px ${sy + s}px,${W}px ${C.TOTAL}px,0 ${C.TOTAL}px)`;
+    else light.style.clipPath = polyCss(clipPoly(rectV(), c, true).map(p => [p[0], p[1] + sy]));
+    navL.style.clipPath = polyCss(clipPoly([[0, 0], [W, 0], [W, 102], [0, 102]], c, true));
+  }
+  function decodeAmount(s) { return peelMode ? clamp(sstep(.03, .40, s / TOT()) * 1.08, 0, 1.08) : 0; }
+  function renderCorner(force) {
+    const d = decodeAmount(S);
+    if (!force && Math.abs(S - Sdraw) < .3 && d === dDraw && flick === fDraw) return;
+    const c = W - S;
+    const R = clipPoly(rectV(), c, false);
+    cipher.style.clipPath = polyCss(R);
+    drawCipher(S, d);
+    flap.style.clipPath = polyCss(R.map(p => [p[1] + c, p[0] - c]));
+    flap.style.backgroundImage = 'linear-gradient(225deg,#fffdfb 0%,#fffdfb 50%,#f6eee7 70%,#e9ddd2 88%,#dccdc0 100%)';
+    flap.style.backgroundSize = `${S}px ${S}px`; flap.style.backgroundPosition = `${c}px 0px`;
+    const hs = clamp(S + 30, 120, 760); corner.style.width = hs + 'px'; corner.style.height = hs + 'px';
+    if (peelMode) setLightClip(S);
+    Sdraw = S; dDraw = d; fDraw = flick;
+  }
+  function restTarget() {
+    const y = scrollY, q = clamp(y / C.MAXS, 0, 1);
+    let s = 108 + 110 * sstep(0, .85, q) + 250 * sstep(.9, 1, q);
+    if (y > C.PIN1 * .86 && y < C.PIN1 + 260) s += 44;          // the hero's last beat lifts the corner a little more
+    if (hover) s += 58;
+    if (!REDUCE && !CAP) { const ph = ((performance.now() - breath0) % 5200) / 5200; if (ph < .18) s += 16 * Math.sin(ph / .18 * Math.PI); }
+    return s;
+  }
+  function animate(segs, done) {
+    mode = 'anim'; let i = 0, t0 = performance.now(), from = S;
+    anim = now => {
+      const sg = segs[i], k = clamp((now - t0) / sg.ms, 0, 1);
+      S = lerp(from, typeof sg.to === 'function' ? sg.to() : sg.to, sg.ease(k));
+      if (k >= 1) { i++; from = S; t0 = now; if (i >= segs.length) { anim = null; mode = 'rest'; done && done(); } }
+    };
+  }
+  function autoPeel() {
+    if (theme !== 'L' || mode === 'anim') return;
+    setPeel(true);
+    animate([{ to: .13 * TOT(), ms: 460, ease: easeOut }, { to: .34 * TOT(), ms: REDUCE ? 1 : 1500, ease: k => k },
+      { to: 1.02 * TOT(), ms: REDUCE ? 1 : 720, ease: easeInOut }], toDark);
+  }
+  function commit() { animate([{ to: 1.02 * TOT(), ms: REDUCE ? 1 : 640, ease: easeInOut }], toDark); }
+  function snapBack() { animate([{ to: restTarget, ms: 520, ease: easeOut }], () => setPeel(false)); }
+  function toDark() {
+    theme = 'D'; setPeel(false); mode = 'rest';
+    window.PIN_GO('main', { theme: 'D', y: 5640, effect: 'dark', tone: 'D' });
+  }
+
+  let drag = null;
+  corner.addEventListener('pointerenter', () => { hover = true; });
+  corner.addEventListener('pointerleave', () => { hover = false; });
+  corner.addEventListener('pointerdown', e => {
+    if (theme !== 'L' || mode === 'anim') return;
+    corner.setPointerCapture(e.pointerId);
+    drag = { x: e.clientX, y: e.clientY, s0: S, moved: false };
+  });
+  corner.addEventListener('pointermove', e => {
+    if (!drag) return;
+    const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
+    if (!drag.moved && Math.hypot(dx, dy) > 6) { drag.moved = true; mode = 'drag'; setPeel(true); }
+    if (drag.moved) S = clamp(drag.s0 + (dy - dx) / 2, 70, 1.02 * TOT());
+  });
+  const endDrag = e => {
+    if (!drag) return;
+    const moved = drag.moved; drag = null;
+    if (!moved) { if (e.type === 'pointerup') autoPeel(); return; }
+    if (S / TOT() >= .26) commit(); else snapBack();
+  };
+  corner.addEventListener('pointerup', endDrag);
+  corner.addEventListener('pointercancel', endDrag);
+  corner.addEventListener('click', e => { if (e.detail === 0) autoPeel(); });   // keyboard
+
+  // actions: nav words, tiles and the glitch chip
+  function act(a) {
+    if (a === 'top') smooth(0);
+    else if (a.startsWith('y:')) smooth(+a.slice(2));
+    else if (a === 'map') window.PIN_GO('main', { theme: 'L', y: 5640, effect: 'fade', tone: 'L' });
+    else if (a === 'peel') autoPeel();
+  }
+  $$('[data-act]').forEach(el => el.addEventListener('click', () => act(el.dataset.act)));
+
+  let flickClock = -1;
+  function tick(now) {
+    if (!CAP) { const fk = Math.floor(now / 80); if (fk !== flickClock) { flickClock = fk; flick = (flick + 1) % 100000; } }
+    if (theme === 'L') {
+      if (mode === 'rest') { const tg = restTarget(); S += (tg - S) * (REDUCE || CAP ? 1 : .16); if (Math.abs(tg - S) < .2) S = tg; }
+      else if (mode === 'anim' && anim) anim(now);
+      renderCorner(false);
+    }
+    requestAnimationFrame(tick);
+  }
+  addEventListener('resize', () => { VH = innerHeight; initCipher(); Sdraw = -1; });
+
+  async function start() {
+    try { await doc.fonts.ready; await doc.fonts.load('15px "Courier Prime"'); } catch (e) { /* fonts optional */ }
+    initCipher();
+    if (CAP) {
+      scrollTo(0, +(qs.get('y') || 0));
+      const u = parseFloat(qs.get('peel'));
+      if (!isNaN(u)) { setPeel(true); mode = 'cap'; S = u * TOT(); flick = 3; } else S = restTarget();
+      renderCorner(true);
+    } else { requestAnimationFrame(tick); }
+    if (qs.has('measure')) {
+      await new Promise(r => setTimeout(r, 120));
+      const rows = $$('[data-i]').map(e => [+e.dataset.i, +e.getBoundingClientRect().width.toFixed(2), +e.dataset.w]);
+      document.documentElement.setAttribute('data-measure', JSON.stringify(rows));
+    }
+    window.PIN_READY && window.PIN_READY();
+    body.setAttribute('data-ready', '1');
+  }
+  start();
+})();
+</script>
+</body></html>

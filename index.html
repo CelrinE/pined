@@ -9,15 +9,103 @@ html,body{margin:0;height:100%;background:var(--bg);overflow:hidden}
 .stage{position:fixed;inset:0;overflow:hidden}
 .frame{position:absolute;left:50%;top:50%;width:1920px;height:1080px;transform-origin:0 0}
 iframe{border:0;width:1920px;height:1080px;display:block;background:#000}
+/* page transitions: a veil of horizontal slices (the glitch wipe) that covers the page while the next one loads */
+#veil{position:absolute;left:0;top:0;width:1920px;height:1080px;pointer-events:none;visibility:hidden;overflow:hidden}
+#veil .sl{position:absolute;left:0;width:1920px;will-change:transform}
+#veil .gl{position:absolute;left:0;top:0;width:1920px;height:2px;opacity:0}
+#veil .fl{position:absolute;left:0;top:0;width:1920px;height:1080px;opacity:0}
 </style></head>
 <body>
-<div class="stage"><div class="frame" id="fr"><iframe id="pf" src="prototype.html" title="PINed, 1920 by 1080"></iframe></div></div>
+<div class="stage"><div class="frame" id="fr"><iframe id="pf" src="prototype.html" title="PINed, 1920 by 1080"></iframe><div id="veil" aria-hidden="true"></div></div></div>
+<script src="flow.js"></script>
 <script>
 (function(){
   var st=document.querySelector('.stage'), fr=document.getElementById('fr'), pf=document.getElementById('pf');
   function fit(){ var k=Math.min(st.clientWidth/1920, st.clientHeight/1080); fr.style.transform='scale('+k+') translate(-50%,-50%)'; }
   addEventListener('resize', fit); fit();
   pf.addEventListener('load', function(){ try{ pf.focus(); }catch(e){} });
+
+  // ---------------------------------------------------------------- router
+  // Pages ask for a move with PIN_GO(dest, opts) (flow.js). effect: 'glitch' = flash + sliced wipe, 'fade' = plain cross-fade,
+  // 'dark' = the screen is already dark (a finished peel), so the veil appears at once and only fades away.
+  var veil=document.getElementById('veil'), N=12, SH=1080/N, slices=[], lines=[], flash, busy=false;
+  var REDUCE=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var EASE='cubic-bezier(.76,0,.24,1)';
+  var ORDER=[7,2,10,0,5,11,3,8,1,9,4,6];          // fixed shuffle, so the wipe always looks the same
+  for(var i=0;i<N;i++){ var s=document.createElement('div'); s.className='sl'; s.style.top=(i*SH)+'px'; s.style.height=(SH+1)+'px'; veil.appendChild(s); slices.push(s); }
+  flash=document.createElement('div'); flash.className='fl'; veil.appendChild(flash);
+  for(var j=0;j<3;j++){ var g=document.createElement('div'); g.className='gl'; veil.appendChild(g); lines.push(g); }
+  var LY=[236,538,812];
+
+  function tone(t){
+    var dark=t==='D';
+    slices.forEach(function(s){ s.style.background=dark?'#1d212b':'#edd9cf'; });
+    var cols=dark?['#c6fd54','#8fbbe6','#e45851']:['#e45851','#8fbbe6','#c6fd54'];
+    lines.forEach(function(l,k){ l.style.background=cols[k]; });
+    flash.style.background=dark?'#c6fd54':'#fbf7f4';
+    flash.setAttribute('data-max',dark?'.2':'.85');
+  }
+  function anim(el,kf,opt){ return el.animate(kf,Object.assign({fill:'forwards'},opt)).finished; }
+  function resetVeil(){
+    veil.getAnimations({subtree:true}).forEach(function(a){ a.cancel(); });
+    veil.style.visibility='hidden'; veil.style.opacity='1';
+    slices.forEach(function(s){ s.style.transform='translateX(-105%)'; });
+  }
+  function cover(effect){
+    veil.style.visibility='visible';
+    if(effect==='dark'){ slices.forEach(function(s){ s.style.transform='none'; }); veil.style.opacity='1'; return Promise.resolve(); }
+    if(REDUCE||effect==='fade'){ slices.forEach(function(s){ s.style.transform='none'; }); return anim(veil,[{opacity:0},{opacity:1}],{duration:REDUCE?120:260}); }
+    var ps=[anim(flash,[{opacity:0},{opacity:+flash.getAttribute('data-max')},{opacity:0}],{duration:170})];
+    slices.forEach(function(s,i){
+      var from='translateX('+((i%2?1:-1)*105)+'%)';
+      ps.push(anim(s,[{transform:from},{transform:'translateX(0)'}],{duration:300,delay:80+ORDER[i]*20,easing:EASE}));
+    });
+    lines.forEach(function(l,k){
+      ps.push(anim(l,[{opacity:0,transform:'translate(-8%,'+LY[k]+'px)'},{opacity:.95,transform:'translate(3%,'+(LY[k]+14)+'px)'},{opacity:0,transform:'translate(0,'+(LY[k]+30)+'px)'}],{duration:400,delay:40+k*70}));
+    });
+    return Promise.all(ps);
+  }
+  function reveal(effect){
+    if(effect==='dark'){ return anim(veil,[{opacity:1},{opacity:0}],{duration:REDUCE?120:520}); }
+    if(REDUCE||effect==='fade'){ return anim(veil,[{opacity:1},{opacity:0}],{duration:REDUCE?120:300}); }
+    var ps=[];
+    slices.forEach(function(s,i){
+      ps.push(anim(s,[{transform:'translateX(0)'},{transform:'translateX('+((i%2?-1:1)*105)+'%)'}],{duration:320,delay:ORDER[i]*18,easing:EASE}));
+    });
+    lines.forEach(function(l,k){
+      ps.push(anim(l,[{opacity:0,transform:'translate(2%,'+(LY[k]+60)+'px)'},{opacity:.9,transform:'translate(-4%,'+(LY[k]+44)+'px)'},{opacity:0,transform:'translate(0,'+(LY[k]+20)+'px)'}],{duration:340,delay:k*60}));
+    });
+    return Promise.all(ps);
+  }
+  // wait until the new page says it has drawn (it sets data-ready); give up after 4.5 s
+  function ready(win){
+    return new Promise(function(res){
+      var t0=Date.now();
+      (function poll(){
+        try{ if(win.document.documentElement.getAttribute('data-ready')==='1'||Date.now()-t0>4500) return res(); }catch(e){ return res(); }
+        setTimeout(poll,40);
+      })();
+    });
+  }
+  window.PINRouter={
+    go:function(dest,o){
+      o=o||{};
+      if(busy) return;
+      busy=true;
+      var effect=o.effect||'fade', u=window.PIN_URL(dest,o);
+      tone(o.tone||'L');
+      cover(effect).then(function(){
+        return new Promise(function(res){
+          function once(){ pf.removeEventListener('load',once); res(); }
+          pf.addEventListener('load',once);
+          pf.src=u;
+        });
+      }).then(function(){ return ready(pf.contentWindow); })
+        .then(function(){ return reveal(effect); })
+        .then(function(){ resetVeil(); busy=false; try{ pf.focus(); }catch(e){} });
+    }
+  };
+  resetVeil();
 })();
 </script>
 </body></html>
