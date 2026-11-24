@@ -7,7 +7,7 @@
 <style>
 :root{
   --blush:#edd9cf; --paper:#fbf7f4; --ink:#1c1028; --red:#e45851; --redtext:#4a0a07; --redbig:#c43c35;
-  --char:#1d212b; --cream:#edd9cf; --lime:#c6fd54; --line:#5ea2e2;
+  --char:#1d212b; --cream:#edd9cf; --lime:#c6fd54; --line:#51a2ef;
   --reveal:cubic-bezier(.16,1,.3,1); --wipe:cubic-bezier(.76,0,.24,1);
 }
 
@@ -64,7 +64,7 @@ button:focus-visible{outline:2px solid var(--red);outline-offset:4px}
 #page{position:absolute;left:0;top:0;width:1920px;height:4640px;overflow:hidden;z-index:4;background:var(--blush)}
 #under{position:fixed;left:0;top:0;width:1920px;height:100vh;z-index:1;background:#1d212b url(img/sub/34b031a6.jpg) center/cover}
 #under::before{content:"";position:absolute;inset:0;background:rgba(20,21,29,.66)}
-#under::after{content:"";position:absolute;inset:0;background-image:linear-gradient(rgba(94,162,226,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(94,162,226,.06) 1px,transparent 1px);background-size:96px 96px}
+#under::after{content:"";position:absolute;inset:0;background-image:linear-gradient(rgba(81,162,239,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(81,162,239,.06) 1px,transparent 1px);background-size:96px 96px}
 .tb:hover,.tb:focus-visible{color:var(--redtext)!important}
 .act:hover,.act:focus-visible{outline:1px solid var(--redtext);outline-offset:3px}
 .chipb:hover,.chipb:focus-visible{outline:1px solid var(--lime);outline-offset:3px}
@@ -257,8 +257,9 @@ via Wikimedia Commons · cropped &amp; colour-edited</div></div><button class="a
   function commit() { animate([{ to: 1.02 * TOT(), ms: REDUCE ? 1 : 640, ease: easeInOut }], toDark); }
   function snapBack() { animate([{ to: restTarget, ms: 520, ease: easeOut }], () => setPeel(false)); }
   function toDark() {
+    // a finished peel opens the Dark sub page of the same place (Dark main is one BACK away)
     theme = 'D'; setPeel(false); mode = 'rest';
-    window.PIN_GO('main', { theme: 'D', y: 5640, effect: 'dark', tone: 'D' });
+    window.PIN_GO('sub-dark', { effect: 'dark', tone: 'D', visit: ['KINDERDIJK'] });
   }
 
   let drag = null;
