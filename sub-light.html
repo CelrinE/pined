@@ -94,6 +94,407 @@ via Wikimedia Commons · cropped, colour-edited &amp; glitched</div></div><butto
 <div id="flapw" aria-hidden="true"><div id="flap"></div></div>
 <button type="button" id="corner" aria-label="스티커 아래 보기, 다크 페이지로"></button>
 <script src="flow.js"></script>
+<script id="pin-explain">
+(function () {
+  'use strict';
+  const qs = new URLSearchParams(location.search);
+  if (qs.has('cap') || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const NS = 'http://www.w3.org/2000/svg', LIME = '#c6fd54', BLUE = '#8fbbe6', RED = '#e45851';
+  const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
+  const seg = (p, a, b) => clamp((p - a) / (b - a), 0, 1);
+  const eo = k => 1 - Math.pow(1 - k, 3), eio = k => (k < .5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2);
+  // position along a move that speeds up gently, keeps an even pace and slows down gently (r = share of each ramp)
+  const trap = (k, r) => { const v = 1 / (1 - r); return k < r ? v * k * k / (2 * r) : k > 1 - r ? 1 - v * (1 - k) * (1 - k) / (2 * r) : v * (k - r / 2); };
+  const SPEED = 1.25;   // timed parts play 1.25x faster than their timings below (user, 2026-11-26)
+  // A timed part of a figure that plays once: it starts when the scroll drawing has reached `from` and the point `mid`
+  // (px from the figure's top) is well on screen, runs to `end` seconds and rests. Scrolling back below `resetBelow`
+  // (the figure undraws) resets it, so it plays again on the way down.
+  function once(play, end, opt) {
+    let t = -1;
+    return (dt, vis, p, r, H) => {
+      if (t < 0) { const m = r.top + opt.mid; if (p >= opt.from && m > H * .18 && m < H * .88) t = 0; else return; }
+      if (p < opt.resetBelow) { t = -1; play(0); return; }
+      if (t < end) { t = Math.min(end, t + dt * SPEED); play(t); }
+    };
+  }
+  const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+  const kids = el => Array.from(el.children);
+  const isSvg = k => k.tagName === 'svg', isTxt = k => !isSvg(k) && !!k.textContent.trim();
+  const R = k => { const s = k.style; return { x: parseFloat(s.left) || 0, y: parseFloat(s.top) || 0,
+    w: isSvg(k) ? +k.getAttribute('width') : (parseFloat(s.width) || k.offsetWidth), h: isSvg(k) ? +k.getAttribute('height') : (parseFloat(s.height) || k.offsetHeight) }; };
+  const byX = (a, b) => R(a).x - R(b).x;
+  const p0 = k => k.querySelector('path');
+  const strokeOf = k => (p0(k) ? p0(k).getAttribute('stroke') : null);
+  const fillOf = k => (p0(k) ? p0(k).getAttribute('fill') : null);
+  const dashed = k => !!k.querySelector('path[stroke-dasharray]');
+  const need = (c, msg) => { if (!c) throw new Error(msg); return c; };
+  let maskN = 0;
+
+  // ---- primitives: each returns set(e), e from 0 (not there) to 1 (fully there)
+  function maskDraw(svg, pt) {
+    const id = 'pinx' + (++maskN), W = +svg.getAttribute('width'), H = +svg.getAttribute('height');
+    const m = document.createElementNS(NS, 'mask');
+    m.setAttribute('id', id); m.setAttribute('maskUnits', 'userSpaceOnUse');
+    m.setAttribute('x', -60); m.setAttribute('y', -60); m.setAttribute('width', W + 120); m.setAttribute('height', H + 120);
+    const c = document.createElementNS(NS, 'path');
+    c.setAttribute('d', pt.getAttribute('d')); c.setAttribute('fill', 'none'); c.setAttribute('stroke', '#fff');
+    c.setAttribute('stroke-width', String((+pt.getAttribute('stroke-width') || 1) + 8)); c.setAttribute('pathLength', '1');
+    c.style.strokeDasharray = '1 1';
+    m.appendChild(c); svg.insertBefore(m, svg.firstChild); pt.setAttribute('mask', 'url(#' + id + ')');
+    return e => { c.style.strokeDashoffset = String(1 - e); pt.style.visibility = e > 0 ? 'visible' : 'hidden'; };
+  }
+  function draw(svg) {   // plain strokes draw, dashed strokes draw through a mask, stroke+fill draws then fills, fills fade
+    const fs = $$('path', svg).filter(pt => !pt.closest('mask')).map(pt => {
+      const st = pt.getAttribute('stroke'), fl = pt.getAttribute('fill'), da = pt.getAttribute('stroke-dasharray');
+      const hasS = st && st !== 'none', hasF = fl && fl !== 'none';
+      if (hasS && !hasF && !da) { pt.setAttribute('pathLength', '1'); pt.style.strokeDasharray = '1 1'; return e => { pt.style.strokeDashoffset = String(1 - e); pt.style.visibility = e > 0 ? 'visible' : 'hidden'; }; }
+      if (hasS && !hasF && da) return maskDraw(svg, pt);
+      if (hasS && hasF) {
+        const fo = +(pt.getAttribute('fill-opacity') || 1); pt.setAttribute('pathLength', '1'); pt.style.strokeDasharray = '1 1';
+        return e => { pt.style.strokeDashoffset = String(1 - clamp(e / .75, 0, 1)); pt.style.fillOpacity = String(fo * seg(e, .6, 1)); pt.style.visibility = e > 0 ? 'visible' : 'hidden'; };
+      }
+      return e => { pt.style.opacity = String(e); };
+    });
+    return e => fs.forEach(f => f(e));
+  }
+  function fade(el) { const b = parseFloat(getComputedStyle(el).opacity) || 1; return e => { el.style.opacity = String(b * e); }; }
+  function rise(el) { const b = parseFloat(getComputedStyle(el).opacity) || 1; return e => { el.style.opacity = String(b * e); el.style.transform = e >= 1 ? '' : 'translateY(' + (10 * (1 - e)).toFixed(1) + 'px)'; }; }
+  function pop(el) { const b = parseFloat(getComputedStyle(el).opacity) || 1; return e => { el.style.opacity = String(b * clamp(e * 2, 0, 1)); el.style.transform = e >= 1 ? '' : 'scale(' + (.4 + .6 * eo(e)).toFixed(3) + ')'; }; }
+  // a water body: the hatch fills from the floor and the lime surface (and its level arrow on the axis) rises to the real level
+  function water(hatch, surface, marker) {
+    const hb = R(hatch), sb = R(surface), d = hb.y + hb.h - sb.y, mb = marker && parseFloat(getComputedStyle(marker).opacity) || 1;
+    return e => {
+      hatch.style.clipPath = 'inset(' + ((1 - e) * 100).toFixed(2) + '% 0 0 0)'; hatch.style.opacity = e > 0 ? '' : '0';
+      surface.style.transform = 'translateY(' + (d * (1 - e)).toFixed(2) + 'px)'; surface.style.opacity = String(clamp(e * 4, 0, 1));
+      if (marker) { marker.style.transform = surface.style.transform; marker.style.opacity = String(mb * clamp(e * 4, 0, 1)); }
+    };
+  }
+  // a drop that travels along a path, and a ring where it lands
+  function dropper(svg, pt, col) {
+    const L = pt.getTotalLength(), end = pt.getPointAtLength(L);
+    const mk = () => { const c = document.createElementNS(NS, 'circle'); c.style.visibility = 'hidden'; svg.appendChild(c); return c; };
+    const c = mk(), ring = mk();
+    c.setAttribute('r', '4.5'); c.setAttribute('fill', col || LIME);
+    ring.setAttribute('fill', 'none'); ring.setAttribute('stroke', col || LIME); ring.setAttribute('stroke-width', '1.4');
+    ring.setAttribute('cx', end.x); ring.setAttribute('cy', end.y);
+    return {
+      put(x) { if (x <= 0 || x >= 1) { c.style.visibility = 'hidden'; return; } const q = pt.getPointAtLength(L * x); c.setAttribute('cx', q.x); c.setAttribute('cy', q.y); c.style.visibility = 'visible'; },
+      at(e) { this.put(e <= 0 || e >= 1 ? e : eio(e)); },
+      ring(e) { if (e <= 0 || e >= 1) { ring.style.visibility = 'hidden'; return; } ring.setAttribute('r', String(3 + 15 * eo(e))); ring.style.opacity = String(1 - e); ring.style.visibility = 'visible'; },
+      off() { c.style.visibility = 'hidden'; ring.style.visibility = 'hidden'; },
+    };
+  }
+  function countUp(el) {
+    const t = el.textContent, m = t.match(/\d+(\.\d+)?/); if (!m) return fade(el);
+    const v = parseFloat(m[0]), dec = m[1] ? m[1].length - 1 : 0, f = fade(el);
+    return e => { f(clamp(e * 3, 0, 1)); el.textContent = e >= 1 ? t : t.replace(m[0], (v * eo(e)).toFixed(dec)); };
+  }
+  // put some children in a full-size wrapper (to turn them together) and return it
+  function wrap(nodes) {
+    const par = nodes[0].parentElement, w = document.createElement('div');
+    w.style.cssText = 'position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none';
+    par.insertBefore(w, nodes[0]); nodes.forEach(n => w.appendChild(n)); return w;
+  }
+  function unionCenter(par, nodes) {
+    const pr = par.getBoundingClientRect(); let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
+    nodes.forEach(n => $$('svg', n).concat(isSvg(n) ? [n] : []).forEach(s => { const r = s.getBoundingClientRect(); x0 = Math.min(x0, r.left); y0 = Math.min(y0, r.top); x1 = Math.max(x1, r.right); y1 = Math.max(y1, r.bottom); }));
+    return [(x0 + x1) / 2 - pr.left, (y0 + y1) / 2 - pr.top];
+  }
+
+  // ---- a figure: a list of timed items, driven by the scroll position, plus an optional loop once fully drawn
+  const figs = [];
+  function figure(el, items, opt) {
+    const leftovers = new Set(kids(el)); items.forEach(it => (it.els || []).forEach(n => leftovers.delete(n)));
+    leftovers.forEach(n => items.push({ f: isTxt(n) ? rise(n) : fade(n), a: .02, b: .2 }));
+    const fig = Object.assign({ el, items, cur: 0, shown: -1, t0: 0, span: .72, start: .95 }, opt || {});
+    fig.set = p => { fig.items.forEach(it => it.f((it.ease || eo)(seg(p, it.a, it.b)))); if (fig.after) fig.after(p); };
+    fig.set(0); figs.push(fig); return fig;
+  }
+  const take = (el, fn) => { try { fn(); el.setAttribute('data-sx', el.getAttribute('data-sd')); el.removeAttribute('data-sd'); } catch (e) { console.warn('pin-explain:', e.message); } };
+
+  // ---------------------------------------------------------------- Dark FIG. 2: the water climbs out in three steps
+  function fig2(el) {
+    const C = kids(el), S = C.filter(isSvg), B = C.filter(k => !isSvg(k) && !isTxt(k)), T = C.filter(isTxt);
+    const tx = re => need(T.find(k => re.test(k.textContent.trim())), 'text ' + re);
+    const after = (k, n) => { const i = C.indexOf(k); return C.slice(i, i + 1 + n).filter(isTxt); };
+    const terrain = need(S.find(k => fillOf(k) && fillOf(k) !== 'none' && strokeOf(k) && R(k).w > 800), 'terrain');
+    const hatch = S.filter(k => dashed(k) && strokeOf(k) === BLUE && k.querySelectorAll('path').length === 2 && R(k).w > 100).sort(byX);
+    const surf = S.filter(k => !dashed(k) && strokeOf(k) === LIME && R(k).w > 100 && R(k).w < 400 && R(k).h < 10).sort(byX);
+    const arcs = S.filter(k => dashed(k) && strokeOf(k) === LIME).sort(byX);
+    const heads = S.filter(k => fillOf(k) === LIME && R(k).w < 14 && R(k).x > 150).sort(byX);
+    const marks = S.filter(k => fillOf(k) === LIME && R(k).x < 100).sort((a, b) => R(b).y - R(a).y);
+    if (hatch.length !== 4 || surf.length !== 4 || arcs.length !== 3 || heads.length !== 3 || marks.length !== 3) throw new Error('fig2 layout');
+    const nap = need(S.find(k => strokeOf(k) === LIME && R(k).w > 1000), 'nap');
+    const axis = S.filter(k => R(k).x < 90 && R(k).h > 600);
+    const bracket = S.find(k => !dashed(k) && strokeOf(k) === LIME && k.querySelectorAll('path').length === 2 && R(k).h > 50 && R(k).w < 20);
+    const pointer = S.find(k => !dashed(k) && strokeOf(k) === LIME && R(k).w > 40 && R(k).w < 100 && R(k).h > 20);
+    const mill = need(S.find(k => strokeOf(k) === BLUE && R(k).w > 100 && R(k).w < 140 && R(k).h > 120), 'mill');
+    const today = S.filter(k => (strokeOf(k) === BLUE && p0(k).getAttribute('stroke-dasharray') === '3 5') || (fillOf(k) === BLUE && R(k).w < 12));
+    const badges = B.filter(k => getComputedStyle(k).borderRadius === '50%' && R(k).w < 32).sort(byX);
+    const here = B.find(k => getComputedStyle(k).borderRadius === '50%' && R(k).w > 40);
+    const nums = ['1', '2', '3'].map(n => T.find(k => k.textContent.trim() === n));
+    const codeBox = B.find(k => /29, 33, 43/.test(getComputedStyle(k).backgroundColor) && R(k).h > 100);
+    const codeG = C.find(k => !isSvg(k) && k.children.length > 2 && /mill\.lift/.test(k.textContent));
+    const headBox = B.find(k => /29, 33, 43/.test(getComputedStyle(k).backgroundColor) && R(k).h < 100);
+    const labA = after(tx(/^a\. polder/), 2), labB = after(tx(/^b\. lage/), 2), labC = after(tx(/^c\. hoge/), 2), labD = after(tx(/^d\. Lek/), 3);
+    const todayT = after(tx(/^TODAY/), 1);
+    const drops = arcs.map(a => dropper(a, p0(a)));
+    // the little mill above step 2: its sails turn round the hub (body and roof stay)
+    const mp = mill.querySelectorAll('path'), hub = [58.7, 58.7];
+    const subs = d => d.split(/(?=M )/).map(s => s.trim()).filter(Boolean);
+    const isBody = s => { const pts = s.match(/-?\d+(\.\d+)?/g).map(Number), xy = []; for (let i = 0; i + 1 < pts.length; i += 2) xy.push([pts[i], pts[i + 1]]); return xy.length >= 3 && xy.every(([x, y]) => y >= 54 && Math.abs(x - hub[0]) <= 22); };
+    const all = subs(mp[0].getAttribute('d')).concat(subs(mp[1].getAttribute('d')));
+    mp[0].setAttribute('d', all.filter(isBody).join(' ')); mp[1].setAttribute('d', all.filter(s => !isBody(s)).join(' '));
+    const sails = mp[1];
+    const I = [];
+    const add = (els, f, a, b, ease) => I.push({ els: [].concat(els).filter(Boolean), f, a, b, ease });
+    // scroll: the setting. Photo, labels, axis, ground, NAP line and the little mill draw; the polder and the river hold water
+    add(C.slice(0, 2), (f => e => f.forEach(g => g(e)))(C.slice(0, 2).map(fade)), 0, .16);
+    [headBox].concat(after(tx(/^FIG\. 2/), 2)).forEach((k, i) => add(k, rise(k), .02 + i * .02, .14 + i * .02));
+    axis.forEach(k => add(k, draw(k), .03, .2));
+    T.filter(k => /^([+−]?\d\.\d|0|NAP m)$/.test(k.textContent.trim())).forEach((k, i) => add(k, rise(k), .05 + i * .012, .14 + i * .012));
+    add(terrain, draw(terrain), .1, .36, eio);
+    add(nap, draw(nap), .2, .3); add(tx(/^▲ NAP 0/), rise(tx(/^▲ NAP 0/)), .24, .32);
+    add(mill, draw(mill), .28, .42);
+    add([hatch[0], surf[0], marks[0]], water(hatch[0], surf[0], marks[0]), .38, .48, eio); labA.forEach((k, j) => add(k, rise(k), .44 + j * .015, .5 + j * .015));
+    add([hatch[3], surf[3]], water(hatch[3], surf[3], null), .4, .5, eio);   // the Lek is always there
+    if (codeBox) add(codeBox, fade(codeBox), .86, .92);
+    if (codeG) kids(codeG).forEach((k, j) => add(k, isTxt(k) ? rise(k) : fade(k), .88 + j * .015, .94 + j * .015)), I.push({ els: [codeG], f: () => {}, a: 0, b: 1 });
+    add(tx(/^DATA/), fade(tx(/^DATA/)), .95, 1);
+    // timed, once: step by step the water climbs out. Each drop rides its arc slowly (drawing it) while the basin it fills
+    // rises with it; the little mill turns once during step 2 (its step); then the labels, the range bracket and TODAY.
+    const hereT = tx(/물이 한 단/);
+    const F = { lage: water(hatch[1], surf[1], marks[1]), hoge: water(hatch[2], surf[2], marks[2]),
+      badge: badges.map((k, i) => [pop(k), pop(nums[i])]), arc: arcs.map(draw), head: heads.map(pop),
+      lab: [labB.map(rise), labC.map(rise), labD.map(rise)], here: here ? pop(here) : null, ptr: pointer ? draw(pointer) : null,
+      hereT: rise(hereT), br: bracket ? draw(bracket) : null, today: today.map(draw), todayT: todayT.map(rise) };
+    I.push({ els: [hatch[1], surf[1], marks[1], hatch[2], surf[2], marks[2], here, pointer, hereT, bracket]
+      .concat(badges, nums, arcs, heads, labB, labC, labD, today, todayT).filter(Boolean), f: () => {}, a: 0, b: 1 });
+    const RIDE = [[.6, 4], [5.2, 8.6], [9.8, 12.8]], MILL = [4.6, 10.4], END = 14.4;   // seconds
+    function play(t) {
+      RIDE.forEach(([a, b], i) => {
+        const e = trap(clamp((t - a) / (b - a), 0, 1), .2);
+        F.badge[i].forEach(f => f(eo(seg(t, a - .5, a))));
+        drops[i].put(e); F.arc[i](e);
+        if (i === 0) F.lage(e); else if (i === 1) F.hoge(e);
+        F.head[i](eo(seg(t, b - .15, b + .25)));
+        drops[i].ring(seg(t, b, b + .9));
+        F.lab[i].forEach((f, j) => f(eo(seg(t, b + .2 + j * .15, b + .9 + j * .15))));
+      });
+      if (F.here) F.here(eo(seg(t, RIDE[1][0] - .4, RIDE[1][0] + .3)));
+      if (F.ptr) F.ptr(eo(seg(t, RIDE[1][0] - .2, RIDE[1][0] + .6)));
+      F.hereT(eo(seg(t, RIDE[1][0], RIDE[1][0] + .8)));
+      if (F.br) F.br(eo(seg(t, RIDE[1][1] + .4, RIDE[1][1] + 1.4)));
+      const w = trap(clamp((t - MILL[0]) / (MILL[1] - MILL[0]), 0, 1), .2);
+      if (w > 0 && w < 1) sails.setAttribute('transform', 'rotate(' + (-360 * w).toFixed(2) + ' ' + hub[0] + ' ' + hub[1] + ')'); else sails.removeAttribute('transform');
+      F.today.forEach(f => f(eo(seg(t, RIDE[2][1] + .6, RIDE[2][1] + 1.5))));
+      F.todayT.forEach((f, j) => f(eo(seg(t, RIDE[2][1] + 1 + j * .2, RIDE[2][1] + 1.6 + j * .2))));
+    }
+    const mid = (R(arcs[2]).y + R(hatch[0]).y + R(hatch[0]).h) / 2;   // halfway up the climb
+    figure(el, I, { tick: once(play, END, { mid, from: .48, resetBelow: .3 }) });
+    play(0);
+  }
+
+  // ---------------------------------------------------------------- Dark FIG. 3: the scoop wheel lifts the water over the wall
+  function fig3(el) {
+    const C = kids(el), S = C.filter(isSvg), B = C.filter(k => !isSvg(k) && !isTxt(k)), T = C.filter(isTxt);
+    const tx = re => need(T.find(k => re.test(k.textContent.trim())), 'text ' + re);
+    const after = (k, n) => { const i = C.indexOf(k); return C.slice(i, i + 1 + n).filter(isTxt); };
+    const rings = B.filter(k => getComputedStyle(k).borderRadius === '50%').sort((a, b) => R(b).w - R(a).w);
+    const spokes = need(S.find(k => R(k).w > 300 && Math.abs(R(k).w - R(k).h) < 2), 'spokes');
+    const hatch = S.filter(k => dashed(k) && strokeOf(k) === BLUE && k.querySelectorAll('path').length === 2).sort(byX);
+    const surf = S.filter(k => !dashed(k) && strokeOf(k) === LIME && R(k).h < 3 && R(k).w > 200).sort(byX);
+    const arc = need(S.find(k => dashed(k) && strokeOf(k) === LIME), 'arc');
+    const head = S.find(k => fillOf(k) === LIME);
+    const wall = S.find(k => strokeOf(k) === BLUE && R(k).w < 3 && R(k).h > 150);
+    const dh = S.find(k => strokeOf(k) === LIME && k.querySelectorAll('path').length === 2 && R(k).w < 20);
+    const bars = S.filter(k => strokeOf(k) === BLUE && R(k).x > 700 && R(k).h > 150).sort(byX);
+    const base = S.find(k => strokeOf(k) === BLUE && R(k).x > 700 && R(k).h < 3);
+    if (hatch.length !== 2 || surf.length !== 2 || bars.length !== 2 || rings.length < 2) throw new Error('fig3 layout');
+    const vals = T.filter(k => /^\d\.\d\d m$/.test(k.textContent.trim())).sort(byX), bft = T.filter(k => /^Bft \d$/.test(k.textContent.trim())).sort(byX);
+    const lowBox = B.find(k => /20, 21, 29/.test(getComputedStyle(k).backgroundColor));
+    const codeBox = B.find(k => /29, 33, 43/.test(getComputedStyle(k).backgroundColor));
+    const codeG = C.find(k => !isSvg(k) && k.children.length > 2 && /wind\.force/.test(k.textContent));
+    const drop = dropper(arc, p0(arc));
+    // the bars grow from the baseline one after another (one clip polygon per svg: three columns joined along the floor)
+    const cols = [[0, 54, 72], [100, 154, 27], [200, 254, 0]];
+    const barSet = e => bars.forEach((s, si) => {
+      const off = si ? [R(bars[1]).x - R(bars[0]).x, R(bars[1]).y - R(bars[0]).y] : [0, 0], H0 = 207, pts = [];
+      cols.forEach(([x0, x1, top], i) => { const k = eo(seg(e, i * .25, i * .25 + .5)), y = H0 - (H0 - top) * k - off[1] - 3;
+        pts.push([x0 - 3 - off[0], H0 + 4], [x0 - 3 - off[0], y], [x1 + 3 - off[0], y], [x1 + 3 - off[0], H0 + 4]); });
+      s.style.opacity = e > 0 ? '' : '0';
+      s.style.clipPath = 'polygon(' + pts.map(([x, y]) => x.toFixed(1) + 'px ' + y.toFixed(1) + 'px').join(',') + ')';
+    });
+    const I = [];
+    const add = (els, f, a, b, ease) => I.push({ els: [].concat(els).filter(Boolean), f, a, b, ease });
+    add(C.slice(0, 2), (f => e => f.forEach(g => g(e)))(C.slice(0, 2).map(fade)), 0, .16);
+    after(tx(/^FIG\. 3/), 1).forEach((k, i) => add(k, rise(k), .02 + i * .03, .14 + i * .03));
+    add(rings[0], pop(rings[0]), .06, .2); add(rings[1], pop(rings[1]), .14, .22); add(spokes, draw(spokes), .1, .32);
+    if (wall) add(wall, draw(wall), .22, .32);
+    add([hatch[0], surf[0]], water(hatch[0], surf[0], null), .28, .4, eio);
+    after(tx(/^a\. lage/), 1).forEach((k, j) => add(k, rise(k), .34 + j * .02, .4 + j * .02));
+    // the high side first fills to the low side's level along with it (scroll); the lift below raises it the last ΔH
+    const high = water(hatch[1], surf[1], null), hbot = R(hatch[1]).y + R(hatch[1]).h;
+    const F0 = clamp((hbot - R(surf[0]).y) / (hbot - R(surf[1]).y), 0, 1);
+    let hb = 0, hl = 0; const applyHigh = () => high(F0 * hb + (1 - F0) * hl);
+    add([hatch[1], surf[1]], e => { hb = e; applyHigh(); }, .28, .4, eio);
+    if (codeBox) add(codeBox, fade(codeBox), .6, .68);
+    if (codeG) kids(codeG).forEach((k, j) => add(k, isTxt(k) ? rise(k) : fade(k), .62 + j * .02, .7 + j * .02)), I.push({ els: [codeG], f: () => {}, a: 0, b: 1 });
+    if (base) add(base, draw(base), .68, .74);
+    bft.forEach((k, i) => add(k, rise(k), .7 + i * .02, .76 + i * .02));
+    add(bars, barSet, .74, .96, x => x);
+    vals.forEach((k, i) => add(k, countUp(k), .74 + i * .055, .74 + i * .055 + .11));
+    add(tx(/^DATA/), fade(tx(/^DATA/)), .95, 1);
+    // The lift: one timed event, played once when the wheel and both sides are on screen. The wheel makes a single slow
+    // turn; meanwhile one drop is scooped along the arc (drawing it as it goes) and the high side rises with the drop by ΔH.
+    // Then the drop lands, the arrow, ΔH and the high side's labels appear, and everything rests. Scrolling back above the
+    // figure (the wheel undraws) resets it, so it plays again on the way down.
+    const narr = T.filter(k => /날개가 물을|한 단 위로/.test(k.textContent)), highLab = after(tx(/^b\. hoge/), 1), dhT = tx(/^ΔH$/);
+    const Lf = { arc: draw(arc), head: head ? pop(head) : null, narr: narr.map(rise), box: lowBox ? fade(lowBox) : null,
+      lab: highLab.map(rise), dh: dh ? draw(dh) : null, dhT: pop(dhT) };
+    I.push({ els: [arc, head, lowBox, dh, dhT].concat(narr, highLab).filter(Boolean), f: () => {}, a: 0, b: 1 });
+    const TURN = 8, D0 = 1, D1 = 6.8, END = 8.8;   // seconds: the wheel's one turn, the drop's ride, the whole lift
+    function liftAt(t) {
+      const w = trap(clamp(t / TURN, 0, 1), .18);
+      spokes.style.transform = w > 0 && w < 1 ? 'rotate(' + (-360 * w).toFixed(2) + 'deg)' : '';
+      const e = trap(clamp((t - D0) / (D1 - D0), 0, 1), .2);
+      drop.put(e); Lf.arc(e); hl = e; applyHigh();
+      drop.ring(seg(t, D1, D1 + .9));
+      if (Lf.head) Lf.head(eo(seg(t, D1 - .15, D1 + .25)));
+      Lf.narr.forEach((f, i) => f(eo(seg(t, .2 + i * .3, 1.1 + i * .3))));
+      if (Lf.box) Lf.box(eo(seg(t, D1 + .1, D1 + .7)));
+      Lf.lab.forEach((f, i) => f(eo(seg(t, D1 + .2 + i * .2, D1 + .9 + i * .2))));
+      if (Lf.dh) Lf.dh(eo(seg(t, D1 + .5, D1 + 1.5)));
+      Lf.dhT(eo(seg(t, D1 + 1.2, D1 + 1.8)));
+    }
+    spokes.style.transformOrigin = (R(spokes).w / 2) + 'px ' + (R(spokes).h / 2) + 'px';
+    figure(el, I, { tick: once(liftAt, END, { mid: R(arc).y + R(arc).h / 2, from: .42, resetBelow: .3 }) });
+    liftAt(0);
+  }
+
+  // ---------------------------------------------------------------- Dark FIG. 5: 19 mills, counted in
+  function mills(el) {
+    const C = kids(el), S = C.filter(isSvg), T = C.filter(isTxt);
+    const icons = need(S.find(k => R(k).w > 400), 'icons');
+    const counts = T.filter(k => /^\d+$/.test(k.textContent.trim())).sort(byX);
+    if (counts.length !== 3) throw new Error('mills layout');
+    // icon left edges from the drawing; groups split where the gap is large
+    const xs = (p0(icons).getAttribute('d').match(/M (-?[\d.]+)/g) || []).map(s => parseFloat(s.slice(2))).sort((a, b) => a - b);
+    const groups = []; xs.forEach((x, i) => { if (!i || x - xs[i - 1] > 40) groups.push([]); groups[groups.length - 1].push(x); });
+    const W = R(icons).w;
+    const I = [];
+    const add = (els, f, a, b, ease) => I.push({ els: [].concat(els).filter(Boolean), f, a, b, ease });
+    const head = T.find(k => /19 MILLS/.test(k.textContent));
+    add(head, rise(head), 0, .15);
+    T.filter(k => /·/.test(k.textContent) && k !== head).forEach((k, i) => add(k, rise(k), .1 + i * .04, .22 + i * .04));
+    add(icons, e => { const x = 4 + (W + 4) * e; icons.style.clipPath = 'inset(-4px ' + Math.max(0, W - x).toFixed(1) + 'px -4px -4px)';
+      counts.forEach((k, i) => { const g = groups[i] || [], v = +k.dataset.v, n = Math.round(v * g.filter(gx => gx + 10 <= x).length / Math.max(1, g.length)); k.textContent = String(e >= 1 ? v : n); k.style.opacity = e > 0 || n ? '' : '0'; }); }, .2, .9, x => x);
+    counts.forEach(k => { k.dataset.v = k.textContent.trim(); I[I.length - 1].els.push(k); });
+    const fig5 = T.find(k => /^FIG\. 5/.test(k.textContent.trim())); if (fig5) add(fig5, fade(fig5), .9, 1);
+    if (groups.length !== 3) throw new Error('mills icons ' + groups.map(g => g.length));
+    figure(el, I);
+  }
+
+  // ---------------------------------------------------------------- hero line art (both pages): once drawn, the mill works
+  function hero(el) {
+    const mill = kids(el).find(k => !isSvg(k) && !isTxt(k) && $$('svg', k).length > 10); if (!mill) return;
+    const inner = kids(mill).find(k => !isSvg(k) && kids(k).length > 4) || mill;
+    const sailG = kids(inner).filter(k => !isSvg(k) && $$('svg', k).length >= 5).slice(0, 4);
+    const spins = [];
+    if (sailG.length === 4) {
+      const [cx, cy] = unionCenter(inner, sailG), w = wrap(sailG);
+      w.style.transformOrigin = cx.toFixed(1) + 'px ' + cy.toFixed(1) + 'px'; spins.push([w, 40]);
+      // a scoop wheel: a round svg below the sails plus everything inside its circle
+      const rim = kids(inner).filter(isSvg).find(k => R(k).w >= 40 && Math.abs(R(k).w - R(k).h) < 2);
+      if (rim) {
+        const r = R(rim), cxr = r.x + r.w / 2, cyr = r.y + r.h / 2;
+        const parts = kids(inner).filter(k => isSvg(k) && (() => { const q = R(k), mx = q.x + q.w / 2, my = q.y + q.h / 2; return Math.hypot(mx - cxr, my - cyr) <= r.w / 2 + 2 && q.w <= r.w + 1; })());
+        const ww = wrap(parts); ww.style.transformOrigin = cxr + 'px ' + cyr + 'px'; spins.push([ww, 70]);
+      }
+    }
+    const waves = kids(el).filter(k => !isSvg(k) && !isTxt(k) && R(k).w > 1000 && R(k).h < 140).flatMap(k => kids(k).filter(isSvg));
+    const amp = waves.map(s => clamp(R(s).x + R(s).w - R(s.parentElement).w - 4, 0, 180));   // how far it can slide left
+    const TURN = 8;   // seconds for the one turn
+    let t0 = -1;
+    function frame(now) {
+      const r = el.getBoundingClientRect(), vis = r.bottom > 0 && r.top < innerHeight;
+      if (vis && t0 < 0) t0 = now + 2600;   // after the page's own drawing (about 2.5 s)
+      if (t0 >= 0 && now > t0) {
+        const k = clamp((now - t0) / 1000 * SPEED / TURN, 0, 1), w = trap(k, .18), on = k > 0 && k < 1;
+        spins.forEach(([n]) => { n.style.transform = on ? 'rotate(' + (-360 * w).toFixed(2) + 'deg)' : ''; });
+        waves.forEach((s, i) => { s.style.translate = on ? (-Math.min(90, amp[i]) * (1 - Math.cos(2 * Math.PI * w)) / 2).toFixed(1) + 'px 0' : ''; });
+        if (k >= 1) return;   // done: the mill rests
+      }
+      requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+  }
+
+  // ---------------------------------------------------------------- Light sun path: the sun crosses the day
+  function sunPath(el) {
+    const arcSvg = need(kids(el).find(k => isSvg(k) && R(k).w > 300), 'sun arc'), arc = p0(arcSvg);
+    const markers = kids(el).filter(k => !isSvg(k) && k.children.length && /^0\d$/.test(k.textContent.trim()));
+    const L = arc.getTotalLength(), ar = R(arcSvg);
+    const halo = document.createElementNS(NS, 'circle'), sun = document.createElementNS(NS, 'circle');
+    halo.setAttribute('r', '15'); halo.setAttribute('fill', RED); halo.setAttribute('opacity', '.18');
+    sun.setAttribute('r', '7'); sun.setAttribute('fill', RED);
+    [halo, sun].forEach(c => { c.style.visibility = 'hidden'; arcSvg.appendChild(c); });
+    const trail = maskDraw(arcSvg, arc);
+    const at = markers.map(m => { const r = R(m), cx = r.x + r.w / 2 - ar.x, cy = r.y + r.h / 2 - ar.y; let best = 0, bd = 1e9;
+      for (let i = 0; i <= 200; i++) { const q = arc.getPointAtLength(L * i / 200), d = Math.hypot(q.x - cx, q.y - cy); if (d < bd) { bd = d; best = i / 200; } } return best; });
+    const put = s => { const q = arc.getPointAtLength(L * clamp(s, 0, 1)); [halo, sun].forEach(c => { c.setAttribute('cx', q.x); c.setAttribute('cy', q.y); c.style.visibility = s > 0 && s < 1.02 ? 'visible' : 'hidden'; }); };
+    const bump = s => markers.forEach((m, i) => { const d = s - at[i]; m.style.scale = d > 0 && d < .12 ? String(1 + .35 * Math.sin(Math.PI * d / .12)) : ''; });
+    const fig = { el, cur: 0, shown: -1, span: .62, start: .9, items: [],
+      set(p) { const s = seg(p, .12, .92); trail(s > 0 ? Math.max(.002, s) : 0); arcSvg.style.visibility = s > 0 ? '' : 'hidden'; put(s); bump(s < 1 ? s : 2); } };
+    fig.set(0); figs.push(fig);
+  }
+  // ---------------------------------------------------------------- Light route: Rotterdam → Kinderdijk
+  function route(page) {
+    const all = $$('div', page).filter(k => k.children.length === 0);
+    const from = all.find(k => k.textContent.trim() === 'ROTTERDAM'); if (!from) return;
+    const par = from.parentElement, C = kids(par);
+    const km = need(C.find(k => /^≈ 15 km$/.test(k.textContent.trim())), 'km');
+    const line = need(C.find(k => !k.textContent.trim() && R(k).w > 600 && R(k).h <= 3), 'route line'), lr = R(line);
+    const pin = need(C.find(k => !isTxt(k) && $$('svg', k).length === 2 && R(k).x > lr.x + lr.w - 40), 'pin');
+    const fill = document.createElement('div');
+    fill.style.cssText = 'position:absolute;left:' + lr.x + 'px;top:' + (lr.y - 1) + 'px;height:4px;width:0;background:' + RED + ';pointer-events:none';
+    par.insertBefore(fill, line.nextSibling);
+    const pr = R(pin), travel = pr.x + pr.w / 2 - lr.x;
+    const fig = { el: line, cur: 0, shown: -1, span: .5, start: .92, items: [],
+      set(p) { const e = eio(seg(p, .1, .95)); pin.style.transform = e >= 1 ? '' : 'translateX(' + (-travel * (1 - e)).toFixed(1) + 'px)'; fill.style.width = (travel * e).toFixed(1) + 'px'; km.textContent = '≈ ' + Math.round(15 * e) + ' km'; } };
+    fig.set(0); figs.push(fig);
+  }
+
+  // ---------------------------------------------------------------- wire up
+  $$('[data-sd]').forEach(el => {
+    const t = el.textContent;
+    if (el.dataset.sd === 'time') { try { hero(el); } catch (e) { console.warn('pin-explain hero:', e.message); } return; }
+    if (/DOORSNEDE/.test(t)) take(el, () => fig2(el));
+    else if (/SCHEPRAD/.test(t) && /Bft/.test(t)) take(el, () => fig3(el));
+    else if (/19 MILLS/.test(t)) take(el, () => mills(el));
+    else if (/PHOTOS SHOT AT/.test(t)) { try { sunPath(el); } catch (e) { console.warn('pin-explain sun:', e.message); } }
+  });
+  try { const pg = document.getElementById('page'); if (pg && /ROTTERDAM/.test(pg.textContent)) route(pg); } catch (e) { console.warn('pin-explain route:', e.message); }
+
+  let last = 0;
+  function frame(now) {
+    const H = innerHeight, dt = last ? Math.min(.05, (now - last) / 1000) : 0; last = now;
+    figs.forEach(f => {
+      const r = f.el.getBoundingClientRect(), vis = r.bottom > -80 && r.top < H + 80;
+      const target = clamp((H * f.start - r.top) / (H * f.span), 0, 1);
+      f.cur += (target - f.cur) * .14; if (Math.abs(target - f.cur) < .002) f.cur = target;
+      const looping = vis && !!f.loop && f.cur >= .995;
+      if (!looping && f.looping) { f.looping = false; if (f.reset) f.reset(); f.shown = -1; }
+      if (Math.abs(f.cur - f.shown) > 1e-4) { f.set(f.cur); f.shown = f.cur; }
+      if (vis && f.spin && f.cur >= (f.spinFrom || 0)) f.spin(dt);
+      if (f.tick) f.tick(dt, vis, f.cur, r, H);
+      if (looping) { f.looping = true; f.t0 += dt; f.loop(f.t0, dt); } else f.t0 = 0;
+    });
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+})();
+</script><!--/pin-explain-->
 <script>(function () {
   'use strict';
   const W = 1920;
