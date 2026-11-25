@@ -1,17 +1,20 @@
 <!doctype html>
 <html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>PINed</title>
+<title>PINed — 발밑까지 아름다운 나라</title>
+<meta name="description" content="풍차와 운하, 꽃밭과 작은 항구 마을까지. 천천히 걸을수록 더 예쁜 네덜란드, 그리고 그 풍경 아래에서 땅을 지키는 과학.">
+<meta property="og:type" content="website"><meta property="og:title" content="PINed — 발밑까지 아름다운 나라"><meta property="og:description" content="풍차와 운하, 꽃밭과 작은 항구 마을까지. 천천히 걸을수록 더 예쁜 네덜란드, 그리고 그 풍경 아래에서 땅을 지키는 과학."><meta property="og:url" content="https://celrine.github.io/pined/"><meta property="og:image" content="https://celrine.github.io/pined/img/og.jpg"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta name="twitter:card" content="summary_large_image">
+<link rel="icon" type="image/png" href="img/favicon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#000;color-scheme:dark}
-@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#000}}
-:root[data-theme="dark"]{--bg:#000}
+:root{--bg:#edd9cf;color-scheme:light}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#edd9cf}}
+:root[data-theme="dark"]{--bg:#edd9cf}
 html,body{margin:0;height:100%;background:var(--bg);overflow:hidden;transition:background-color .4s}
 .stage{position:fixed;inset:0;overflow:hidden}
 /* the 1920x1080 design; fit() places and scales it (never above 100%) */
 .frame{position:absolute;left:0;top:0;width:1920px;height:1080px;transform-origin:0 0}
-iframe{border:0;width:1920px;height:1080px;display:block;background:#000}
+iframe{border:0;width:1920px;height:1080px;display:block;background:#edd9cf}
 /* page transitions: a veil that covers the page while the next one loads */
 #veil{position:absolute;left:0;top:0;width:1920px;height:1080px;pointer-events:none;visibility:hidden;overflow:hidden}
 #veil .sl{position:absolute;left:0;width:1920px;will-change:transform}
@@ -24,8 +27,20 @@ iframe{border:0;width:1920px;height:1080px;display:block;background:#000}
 #gx .trk{position:absolute;left:0;top:0;width:1920px;height:130px;background:linear-gradient(rgba(255,255,255,0),rgba(255,255,255,.28) 50%,rgba(255,255,255,0));mix-blend-mode:screen;opacity:0}
 #gx .gb{position:absolute;display:none}
 #gx .gt{position:absolute;display:none;white-space:pre;font:700 24px/1 'Courier Prime','Courier New',monospace;letter-spacing:.06em}
+/* F06: zoom and small screens */
+.stage.scroll{overflow:auto}
+#small{position:fixed;inset:0;z-index:20;display:none;background:#edd9cf;color:#1c1028;font-family:'Noto Sans KR',system-ui,sans-serif;overflow:auto;-webkit-font-smoothing:antialiased}
+#small.on{display:block}
+#small .ph{height:46vh;min-height:220px;background:#1d212b url(img/hs0.jpg) center/cover}
+#small .in{padding:24px 20px 36px;max-width:560px}
+#small .lg{height:40px;width:auto;display:block;margin:0 0 20px}
+#small h1{margin:0 0 12px;font-size:32px;line-height:1.15;font-weight:800;letter-spacing:-.03em;word-break:keep-all}
+#small p{margin:0 0 24px;font-size:17px;line-height:1.65;color:rgba(28,16,40,.82);word-break:keep-all}
+#small button{font:700 18px/1 'Courier Prime',monospace;background:#1c1028;color:#fbf7f4;border:0;padding:16px 20px;cursor:pointer}
+#small button:focus-visible{outline:2px solid #e45851;outline-offset:4px}
 </style></head>
 <body>
+<div id="small" role="dialog" aria-modal="true" aria-labelledby="smallH"><div class="ph" aria-hidden="true"></div><div class="in"><img class="lg" src="img/logo-l.png" alt="PINed"><h1 id="smallH">발밑까지 아름다운 나라</h1><p>PINed는 1920×1080 화면에 맞춰 만든 웹 프로토타입이에요. 노트북이나 데스크톱에서 열면 스티커를 벗겨 풍경 아래의 과학까지 볼 수 있어요.</p><button type="button" id="smallGo">[ 그래도 보기 ]</button></div></div>
 <div class="stage"><div class="frame" id="fr"><iframe id="pf" src="prototype.html" title="PINed, 1920 by 1080"></iframe><div id="veil" aria-hidden="true"></div></div></div>
 <script src="flow.js"></script>
 <script>
@@ -33,18 +48,28 @@ iframe{border:0;width:1920px;height:1080px;display:block;background:#000}
   var st=document.querySelector('.stage'), fr=document.getElementById('fr'), pf=document.getElementById('pf');
   // The frame is the 1920x1080 design. It is shown at its real size, centered, and only scaled down when the window is
   // smaller, so a bigger window never zooms the page. It sits on whole pixels, so text stays sharp.
+  // F06 (review 11/25): browser zoom changes devicePixelRatio. The frame is fitted to the window as it was at the zoom the page
+  // was opened at, so zooming in really enlarges the page; when it is then bigger than the window, the stage scrolls.
+  // A window whose fit would show the frame at under 55% (phones, tablets) gets a short note first, with a way to go on.
+  var BASE_DPR=window.devicePixelRatio||1, small=document.getElementById('small'), smallOk=false;
+  try{ smallOk=sessionStorage.getItem('pined.small')==='1'; }catch(e){}
   function fit(){
-    var W=st.clientWidth, H=st.clientHeight, k=Math.min(1, W/1920, H/1080);
-    var x=Math.round((W-1920*k)/2), y=Math.round((H-1080*k)/2);
+    var W=st.clientWidth, H=st.clientHeight, z=(window.devicePixelRatio||1)/BASE_DPR;
+    var k=Math.min(1, W*z/1920, H*z/1080), fw=1920*k, fh=1080*k;
+    var x=Math.max(0,Math.round((W-fw)/2)), y=Math.max(0,Math.round((H-fh)/2));
     fr.style.transform='translate('+x+'px,'+y+'px) scale('+k+')';
+    st.classList.toggle('scroll', fw>W+1 || fh>H+1);
+    if(small) small.classList.toggle('on', k<.55 && !smallOk);
   }
+  var smallGo=document.getElementById('smallGo');
+  if(smallGo) smallGo.addEventListener('click', function(){ smallOk=true; try{ sessionStorage.setItem('pined.small','1'); }catch(e){} small.classList.remove('on'); try{ pf.focus(); }catch(e){} });
   addEventListener('resize', fit); fit();
   pf.addEventListener('load', function(){ try{ pf.focus(); }catch(e){} });
   // The space around the frame takes the page's own background instead of black: blush for Light pages, charcoal for Dark
   // ones. Every page marks its theme on <body> (class L or D); the main page switches it when it is peeled or resticked.
   var PAGE_BG={L:'#edd9cf', D:'#1d212b'}, bgWatch=null;
   function syncBg(){
-    var c='#000';
+    var c='#edd9cf';
     try{ var b=pf.contentDocument&&pf.contentDocument.body; if(b) c=b.classList.contains('D')?PAGE_BG.D:b.classList.contains('L')?PAGE_BG.L:c; }catch(e){}
     document.documentElement.style.setProperty('--bg', c);
   }
